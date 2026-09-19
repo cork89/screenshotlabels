@@ -45,30 +45,6 @@ template.innerHTML = `
       flex-direction: column;
       gap: 28px;
     }
-    .sheet-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #1e293b;
-      padding-bottom: 20px;
-    }
-    .brand-wrap {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .brand-mark {
-      width: 42px;
-      height: 42px;
-      background: #121824;
-      border: 1px solid #27354d;
-      border-radius: 8px;
-      display: grid;
-      grid-template: 1fr 1fr / 1fr 1fr;
-      padding: 7px;
-      gap: 3px;
-      box-sizing: border-box;
-    }
     .mark-c1 { background: #38bdf8; border-radius: 2px; }
     .mark-c2 { background: #f59e0b; border-radius: 2px; }
     .mark-c3 { background: #10b981; border-radius: 2px; }
@@ -107,13 +83,10 @@ template.innerHTML = `
     }
     .sheet-card {
       background: #121824;
-      border: 1px solid #27354d;
-      border-radius: 12px;
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 14px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     }
     .card-header {
       display: flex;
@@ -132,7 +105,6 @@ template.innerHTML = `
       font-size: 0.75rem;
       font-weight: 700;
       padding: 3px 6px;
-      border-radius: 4px;
     }
     .card-title {
       font-size: 1.15rem;
@@ -146,7 +118,6 @@ template.innerHTML = `
       color: #94a3b8;
       background: #0b0f17;
       padding: 3px 8px;
-      border-radius: 4px;
       border: 1px solid #1e293b;
       max-width: 240px;
       overflow: hidden;
@@ -156,7 +127,6 @@ template.innerHTML = `
     .card-preview {
       background: #080c12;
       border: 1px solid #1e293b;
-      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -169,28 +139,11 @@ template.innerHTML = `
       max-width: 100%;
       max-height: 490px;
       object-fit: contain;
-      border-radius: 4px;
       display: block;
     }
   </style>
 
   <div class="sheet-layout">
-    <header class="sheet-header">
-      <div class="brand-wrap">
-        <div class="brand-mark" aria-hidden="true">
-          <div class="mark-c1"></div>
-          <div class="mark-c2"></div>
-          <div class="mark-c3"></div>
-          <div class="mark-c4"></div>
-        </div>
-        <div>
-          <h2 class="sheet-title">ProofSheet · Visual Quadrant Synthesis</h2>
-          <p class="sheet-meta" id="metaTimestamp"></p>
-        </div>
-      </div>
-      <div class="item-badge" id="countBadge"></div>
-    </header>
-
     <main class="grid-container" id="grid"></main>
   </div>
 `;
@@ -203,7 +156,6 @@ cardTemplate.innerHTML = `
         <span class="card-coord"></span>
         <span class="card-title"></span>
       </div>
-      <span class="card-filename"></span>
     </header>
     <div class="card-preview">
       <img alt="Screenshot artifact">

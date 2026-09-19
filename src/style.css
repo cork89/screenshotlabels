@@ -50,10 +50,6 @@ header {
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  /* padding: 0.75rem 1.25rem; */
-  /* background: var(--bg-surface); */
-  /* border: 1px solid var(--border-dim); */
-  /* border-radius: var(--radius-lg); */
 }
 .brand {
   display: flex;
@@ -63,9 +59,6 @@ header {
 .brand-mark {
   width: 38px;
   height: 38px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
   display: grid;
   grid-template: 1fr 1fr / 1fr 1fr;
   padding: 7px;
@@ -218,7 +211,7 @@ header {
 .matrix-cell {
   background: var(--bg-surface);
   border: 1px solid var(--border-dim);
-  border-radius: var(--radius-lg);
+  /* border-radius: var(--radius-lg); */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -226,24 +219,6 @@ header {
   transition:
     border-color 0.15s,
     background-color 0.15s;
-}
-.matrix-cell::before,
-.matrix-cell::after {
-  content: "+";
-  position: absolute;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--border-subtle);
-  pointer-events: none;
-  z-index: 2;
-}
-.matrix-cell::before {
-  top: 6px;
-  right: 8px;
-}
-.matrix-cell::after {
-  bottom: 6px;
-  left: 8px;
 }
 
 /* Quadrant Accents */
@@ -342,7 +317,6 @@ header {
   font-size: 0.8rem;
   border: 1px dashed var(--border-dim);
   margin: 0.75rem;
-  border-radius: var(--radius-md);
   background: rgba(0, 0, 0, 0.15);
 }
 .cell-body:empty::before {
@@ -359,11 +333,9 @@ header {
 .dock-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-dim);
-  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  max-height: calc(100vh - 95px);
   transition:
     border-color 0.15s,
     background-color 0.15s;
@@ -408,7 +380,7 @@ header {
 }
 .drop-intake-box {
   border: 1px dashed var(--border-subtle);
-  border-radius: var(--radius-md);
+  /* border-radius: var(--radius-md); */
   padding: 0.9rem 0.75rem;
   text-align: center;
   cursor: pointer;
@@ -479,7 +451,6 @@ header {
 .screenshot-card {
   background: var(--bg-card);
   border: 1px solid var(--border-dim);
-  border-radius: var(--radius-md);
   overflow: hidden;
   cursor: grab;
   position: relative;
@@ -680,7 +651,6 @@ header {
 .composite-dialog {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
   max-width: 95vw;
   max-height: 92vh;
   width: 1120px;
@@ -722,7 +692,6 @@ header {
 #compositeResultImg {
   max-width: 100%;
   height: auto;
-  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8);
   display: block;

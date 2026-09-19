@@ -179,16 +179,6 @@ function render() {
       <div class="img-frame">
         <img src="${item.url}" alt="${item.name}">
         <div class="card-actions-dock">
-          <div class="quick-dispatch">
-            <button class="tool-btn dispatch-btn" title="Dispatch"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
-            <div class="dispatch-menu">
-              <button class="dispatch-item" data-move="square-1"><span class="dispatch-dot" style="background:#38bdf8"></span>01 · NW</button>
-              <button class="dispatch-item" data-move="square-2"><span class="dispatch-dot" style="background:#f59e0b"></span>02 · NE</button>
-              <button class="dispatch-item" data-move="square-3"><span class="dispatch-dot" style="background:#10b981"></span>03 · SW</button>
-              <button class="dispatch-item" data-move="square-4"><span class="dispatch-dot" style="background:#a855f7"></span>04 · SE</button>
-              <button class="dispatch-item" data-move="tray"><span class="dispatch-dot" style="background:#64748b"></span>Tray</button>
-            </div>
-          </div>
           <button class="tool-btn zoom-btn" title="Zoom"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
           <button class="tool-btn delete-btn" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
@@ -523,7 +513,7 @@ if (createQuadrantImgBtn) {
     const qItems = state.items.filter((i) => i.zone.startsWith("square-"));
     if (!qItems.length)
       return alert(
-        "No screenshots found in Quadrants 01–04. Drag screenshots into quadrants first.",
+        "No screenshots found in Quadrants 1–4. Drag screenshots into quadrants first.",
       );
 
     const btn = createQuadrantImgBtn;
