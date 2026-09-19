@@ -8,6 +8,9 @@
     "build": "tsc && vp build",
     "preview": "vp preview"
   },
+  "dependencies": {
+    "modern-screenshot": "^4.7.0"
+  },
   "devDependencies": {
     "typescript": "~6.0.2",
     "vite": "catalog:",

@@ -4,7 +4,23 @@
  * <template> stamping, and reactive property setters.
  */
 
-const template = document.createElement('template');
+export interface ProofItem {
+  id: string;
+  url: string;
+  name: string;
+  time: string;
+  zone: string;
+  createdAt?: number;
+}
+
+export interface QuadrantConfig {
+  id: string;
+  code: string;
+  label: string;
+  color: string;
+}
+
+const template = document.createElement("template");
 template.innerHTML = `
   <style>
     :host {
@@ -179,7 +195,7 @@ template.innerHTML = `
   </div>
 `;
 
-const cardTemplate = document.createElement('template');
+const cardTemplate = document.createElement("template");
 cardTemplate.innerHTML = `
   <article class="sheet-card">
     <header class="card-header">
@@ -195,30 +211,30 @@ cardTemplate.innerHTML = `
   </article>
 `;
 
-class ProofSheet extends HTMLElement {
-  #items = [];
-  #qcfg = {};
+export class ProofSheet extends HTMLElement {
+  #items: ProofItem[] = [];
+  #qcfg: Record<string, QuadrantConfig> = {};
 
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot!.appendChild(template.content.cloneNode(true));
   }
 
-  get items() {
+  get items(): ProofItem[] {
     return this.#items;
   }
 
-  set items(val) {
+  set items(val: ProofItem[]) {
     this.#items = Array.isArray(val) ? val : [];
     this.#update();
   }
 
-  get qcfg() {
+  get qcfg(): Record<string, QuadrantConfig> {
     return this.#qcfg;
   }
 
-  set qcfg(val) {
+  set qcfg(val: Record<string, QuadrantConfig>) {
     this.#qcfg = val || {};
     this.#update();
   }
@@ -226,51 +242,68 @@ class ProofSheet extends HTMLElement {
   /**
    * Helper to configure items and quadrant dictionary in one call.
    */
-  configure({ items = [], qcfg = {} } = {}) {
+  configure({
+    items = [],
+    qcfg = {},
+  }: { items?: ProofItem[]; qcfg?: Record<string, QuadrantConfig> } = {}) {
     this.#qcfg = qcfg;
     this.#items = items;
     this.#update();
   }
 
   #update() {
-    const grid = this.shadowRoot.getElementById('grid');
-    const metaTimestamp = this.shadowRoot.getElementById('metaTimestamp');
-    const countBadge = this.shadowRoot.getElementById('countBadge');
+    if (!this.shadowRoot) return;
+    const grid = this.shadowRoot.getElementById("grid");
+    const metaTimestamp = this.shadowRoot.getElementById("metaTimestamp");
+    const countBadge = this.shadowRoot.getElementById("countBadge");
     if (!grid) return;
 
     // Toggle single column attribute
     if (this.#items.length <= 1) {
-      this.setAttribute('single', '');
+      this.setAttribute("single", "");
     } else {
-      this.removeAttribute('single');
+      this.removeAttribute("single");
     }
 
     // Update header metadata
     const dateStr = new Date().toLocaleDateString().toUpperCase();
     const timeStr = new Date().toLocaleTimeString();
     if (metaTimestamp) metaTimestamp.textContent = `EXPORTED ${dateStr} · ${timeStr}`;
-    if (countBadge) countBadge.textContent = `COUNT: ${this.#items.length} ${this.#items.length === 1 ? 'ARTIFACT' : 'ARTIFACTS'}`;
+    if (countBadge)
+      countBadge.textContent = `COUNT: ${this.#items.length} ${this.#items.length === 1 ? "ARTIFACT" : "ARTIFACTS"}`;
 
     // Clear and stamp cards using cardTemplate
-    grid.innerHTML = '';
+    grid.innerHTML = "";
     const fragment = document.createDocumentFragment();
 
     for (const item of this.#items) {
-      const clone = cardTemplate.content.cloneNode(true);
-      const cfg = this.#qcfg[item.zone] || { code: 'QUAD', color: '#3b82f6', id: '', label: 'Quadrant' };
-      const title = (cfg.id && document.getElementById(cfg.id)?.textContent.trim()) || cfg.label;
+      const clone = cardTemplate.content.cloneNode(true) as DocumentFragment;
+      const cfg = this.#qcfg[item.zone] || {
+        code: "QUAD",
+        color: "#3b82f6",
+        id: "",
+        label: "Quadrant",
+      };
+      const title = (cfg.id && document.getElementById(cfg.id)?.textContent?.trim()) || cfg.label;
 
-      const coordEl = clone.querySelector('.card-coord');
-      coordEl.textContent = cfg.code;
-      coordEl.style.color = cfg.color;
-      coordEl.style.backgroundColor = `${cfg.color}22`;
+      const coordEl = clone.querySelector(".card-coord") as HTMLElement;
+      if (coordEl) {
+        coordEl.textContent = cfg.code;
+        coordEl.style.color = cfg.color;
+        coordEl.style.backgroundColor = `${cfg.color}22`;
+      }
 
-      clone.querySelector('.card-title').textContent = title;
-      clone.querySelector('.card-filename').textContent = item.name;
+      const titleEl = clone.querySelector(".card-title");
+      if (titleEl) titleEl.textContent = title;
 
-      const img = clone.querySelector('img');
-      img.src = item.url;
-      img.alt = item.name;
+      const filenameEl = clone.querySelector(".card-filename");
+      if (filenameEl) filenameEl.textContent = item.name;
+
+      const img = clone.querySelector("img");
+      if (img) {
+        img.src = item.url;
+        img.alt = item.name;
+      }
 
       fragment.appendChild(clone);
     }
@@ -281,17 +314,28 @@ class ProofSheet extends HTMLElement {
   /**
    * Asynchronously wait until all images inside the shadow root have decoded/loaded.
    */
-  async waitForImages() {
-    const imgs = Array.from(this.shadowRoot.querySelectorAll('img'));
-    await Promise.all(imgs.map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(r => {
-        img.onload = r;
-        img.onerror = r;
-      });
-    }));
-    await new Promise(r => setTimeout(r, 60));
+  async waitForImages(): Promise<void> {
+    if (!this.shadowRoot) return;
+    const imgs = Array.from(this.shadowRoot.querySelectorAll("img"));
+    await Promise.all(
+      imgs.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise<void>((r) => {
+          img.onload = () => r();
+          img.onerror = () => r();
+        });
+      }),
+    );
+    await new Promise((r) => setTimeout(r, 60));
   }
 }
 
-customElements.define('proof-sheet', ProofSheet);
+if (!customElements.get("proof-sheet")) {
+  customElements.define("proof-sheet", ProofSheet);
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "proof-sheet": ProofSheet;
+  }
+}
