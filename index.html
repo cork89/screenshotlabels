@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screenshot Sorter · 4 Quadrants</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131d2e;
+      --card-border: #24344d;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --tray-bg: #101927;
+      --dropzone-bg: #111a28;
+      --dropzone-hover: #182844;
+      --border-radius: 12px;
+      --sq1: #38bdf8;
+      --sq2: #a855f7;
+      --sq3: #22c55e;
+      --sq4: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+      gap: 1rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: #090d16;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    }
+
+    .brand-title h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .storage-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .storage-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    .brand-title p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: #1e2c40;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #283a54;
+      border-color: #3b5275;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #090d16;
+      border: none;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35);
+    }
+
+    .btn-composite {
+      background: linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-composite:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #4f46e5 100%);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+    }
+
+    .btn-composite:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-danger {
+      background: #ef44441a;
+      color: #f87171;
+      border-color: #ef444433;
+    }
+
+    .btn-danger:hover {
+      background: #ef44442a;
+      border-color: #ef444466;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    /* Main layout: 4 Squares + Staging Tray */
+    .layout-container {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 1.25rem;
+      flex: 1;
+      min-height: 0;
+    }
+
+    @media (max-width: 1024px) {
+      .layout-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* The 4 Squares Area */
+    .quadrants-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 1rem;
+      min-height: 620px;
+      height: 100%;
+    }
+
+    .square-box {
+      background-color: var(--dropzone-bg);
+      border: 2px dashed var(--card-border);
+      border-radius: var(--border-radius);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .square-box.drag-over {
+      border-color: var(--accent);
+      background-color: var(--dropzone-hover);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.2);
+    }
+
+    .square-1 { border-color: rgba(56, 189, 248, 0.25); }
+    .square-2 { border-color: rgba(168, 85, 247, 0.25); }
+    .square-3 { border-color: rgba(34, 197, 94, 0.25); }
+    .square-4 { border-color: rgba(245, 158, 11, 0.25); }
+
+    .square-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 0.5rem;
+    }
+
+    .square-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      outline: none;
+      cursor: text;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .square-title:focus {
+      background: #1e2c40;
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .square-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .square-1 .square-indicator { background: var(--sq1); box-shadow: 0 0 8px var(--sq1); }
+    .square-2 .square-indicator { background: var(--sq2); box-shadow: 0 0 8px var(--sq2); }
+    .square-3 .square-indicator { background: var(--sq3); box-shadow: 0 0 8px var(--sq3); }
+    .square-4 .square-indicator { background: var(--sq4); box-shadow: 0 0 8px var(--sq4); }
+
+    .item-count {
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .square-content {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.75rem;
+      align-content: start;
+      overflow-y: auto;
+      padding: 0.25rem;
+      min-height: 140px;
+    }
+
+    .square-content:empty::after {
+      content: 'Drop screenshots here';
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 140px;
+      grid-column: 1 / -1;
+      color: #4b5d78;
+      font-size: 0.85rem;
+      font-style: italic;
+      pointer-events: none;
+    }
+
+    /* Staging Tray / Inbox */
+    .tray-container {
+      background-color: var(--tray-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--border-radius);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: calc(100vh - 105px);
+    }
+
+    .tray-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tray-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tray-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .paste-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .kbd {
+      background: #1e2c40;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-family: inherit;
+      color: #e2e8f0;
+      border: 1px solid #334460;
+    }
+
+    /* Upload Drop Zone in Tray */
+    .dropzone-trigger {
+      border: 2px dashed #2f4360;
+      border-radius: 8px;
+      padding: 1.1rem 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(9, 13, 22, 0.5);
+      transition: all 0.2s ease;
+    }
+
+    .dropzone-trigger:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    .dropzone-trigger svg {
+      width: 26px;
+      height: 26px;
+      margin-bottom: 0.3rem;
+      stroke: var(--accent);
+    }
+
+    .dropzone-trigger p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .dropzone-trigger span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tray-items {
+      flex: 1;
+      padding: 0.85rem;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
+      align-content: start;
+    }
+
+    .tray-items:empty::after {
+      content: 'No screenshots waiting.\nPaste (⌘+V) or drop here!';
+      white-space: pre-line;
+      grid-column: 1 / -1;
+      color: #4b5d78;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 3rem;
+      line-height: 1.5;
+    }
+
+    /* Screenshot Card */
+    .screenshot-card {
+      background: #0d1522;
+      border: 1px solid #23334d;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: grab;
+      position: relative;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screenshot-card:hover {
+      border-color: #3b5278;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+    }
+
+    .screenshot-card.dragging {
+      opacity: 0.3;
+      transform: scale(0.96);
+      cursor: grabbing;
+    }
+
+    .img-wrapper {
+      position: relative;
+      width: 100%;
+      height: 98px;
+      background: #060a12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .screenshot-card img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      display: block;
+    }
+
+    .card-actions {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      display: flex;
+      gap: 3px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(4px);
+      border-radius: 6px;
+      padding: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .screenshot-card:hover .card-actions {
+      opacity: 1;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      padding: 3px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .icon-btn.delete-btn:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    /* Quick move dropdown */
+    .quick-move-wrap {
+      position: relative;
+    }
+
+    .quick-move-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      background: #172233;
+      border: 1px solid #2d415f;
+      border-radius: 6px;
+      padding: 4px;
+      min-width: 120px;
+      z-index: 100;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .quick-move-menu.show {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .quick-move-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      border-radius: 4px;
+      background: transparent;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .quick-move-item:hover {
+      background: #25364f;
+      color: #fff;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .card-meta {
+      padding: 0.35rem 0.5rem;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      background: #0d1522;
+      border-top: 1px solid #1a273b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70px;
+    }
+
+    /* Lightbox Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      max-width: 92vw;
+      max-height: 92vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 82vh;
+      border-radius: 8px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.9);
+      object-fit: contain;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: -38px;
+      right: 0;
+      color: #fff;
+      font-size: 2rem;
+      line-height: 1;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .modal-caption {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    /* Composite Image Modal */
+    .composite-modal-box {
+      background: #111a28;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      max-width: 95vw;
+      max-height: 92vh;
+      width: 1080px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+    }
+
+    .composite-modal-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #1e2c40;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #162234;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .composite-modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .composite-modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .composite-preview-scroll {
+      flex: 1;
+      overflow: auto;
+      padding: 1.5rem;
+      background: #090d16;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #compositeResultImg {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      display: block;
+    }
+
+    /* Global drop overlay indicator */
+    #globalDropOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(56, 189, 248, 0.15);
+      border: 3px dashed var(--accent);
+      z-index: 9998;
+      pointer-events: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--accent);
+      backdrop-filter: blur(2px);
+    }
+  </style>
+  <script src="dom-to-image.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⊞</div>
+      <div class="brand-title">
+        <h1>
+          Screenshot Sorter
+          <span class="storage-badge" id="storageStatus" title="Saved locally in browser storage">Saved Locally</span>
+        </h1>
+        <p>Paste or drop screenshots, then drag them into any of the four squares (persisted across refreshes)</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="uploadBtn">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+        Add Images
+      </button>
+      <button class="btn" id="sampleBtn">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+        Add Samples
+      </button>
+      <button class="btn btn-composite" id="createQuadrantImgBtn" title="Render all quadrant screenshots into a single image with quadrant titles above each image">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        Create Quadrants Image
+      </button>
+      <button class="btn" id="exportBtn" title="Download layout summary">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export JSON
+      </button>
+      <button class="btn btn-danger" id="clearAllBtn">Clear All</button>
+      <input type="file" id="fileInput" multiple accept="image/*">
+    </div>
+  </header>
+
+  <div class="layout-container">
+    <!-- The 4 Squares -->
+    <div class="quadrants-grid">
+      <!-- Square 1 -->
+      <div class="square-box square-1 drop-target" data-zone-id="square-1">
+        <div class="square-header">
+          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="1">
+            <span class="square-indicator"></span>
+            <span class="title-text" id="title-sq-1">Square 1: Priority / Top Left</span>
+          </div>
+          <span class="item-count">0 items</span>
+        </div>
+        <div class="square-content drop-target" data-zone-id="square-1"></div>
+      </div>
+
+      <!-- Square 2 -->
+      <div class="square-box square-2 drop-target" data-zone-id="square-2">
+        <div class="square-header">
+          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="2">
+            <span class="square-indicator"></span>
+            <span class="title-text" id="title-sq-2">Square 2: Reviews / Top Right</span>
+          </div>
+          <span class="item-count">0 items</span>
+        </div>
+        <div class="square-content drop-target" data-zone-id="square-2"></div>
+      </div>
+
+      <!-- Square 3 -->
+      <div class="square-box square-3 drop-target" data-zone-id="square-3">
+        <div class="square-header">
+          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="3">
+            <span class="square-indicator"></span>
+            <span class="title-text" id="title-sq-3">Square 3: References / Bottom Left</span>
+          </div>
+          <span class="item-count">0 items</span>
+        </div>
+        <div class="square-content drop-target" data-zone-id="square-3"></div>
+      </div>
+
+      <!-- Square 4 -->
+      <div class="square-box square-4 drop-target" data-zone-id="square-4">
+        <div class="square-header">
+          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="4">
+            <span class="square-indicator"></span>
+            <span class="title-text" id="title-sq-4">Square 4: Archive / Bottom Right</span>
+          </div>
+          <span class="item-count">0 items</span>
+        </div>
+        <div class="square-content drop-target" data-zone-id="square-4"></div>
+      </div>
+    </div>
+
+    <!-- Right Side Staging / Inbox Tray -->
+    <div class="tray-container drop-target" data-zone-id="tray">
+      <div class="tray-header">
+        <div class="tray-title-row">
+          <span class="tray-title">Unassigned Screenshots</span>
+          <span class="item-count" id="trayCount">0 items</span>
+        </div>
+        <div class="paste-hint">
+          <span>Press</span>
+          <span class="kbd">⌘ + V</span>
+          <span>or</span>
+          <span class="kbd">Ctrl + V</span>
+          <span>to paste from clipboard</span>
+        </div>
+        <div class="dropzone-trigger" id="dropzoneBox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <p><span>Browse files</span> or drop here</p>
+        </div>
+      </div>
+      <div class="tray-items drop-target" id="trayList" data-zone-id="tray"></div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Lightbox Modal -->
+  <div class="modal-overlay" id="imageModal">
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <img id="modalImg" src="" alt="Expanded preview">
+      <div class="modal-caption" id="modalCaption"></div>
+    </div>
+  </div>
+
+  <!-- Composite Image Export Modal -->
+  <div class="modal-overlay" id="compositeModal">
+    <div class="composite-modal-box">
+      <div class="composite-modal-header">
+        <div class="composite-modal-title">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span>Quadrants Composite Image</span>
+        </div>
+        <div class="composite-modal-actions">
+          <button class="btn btn-primary" id="downloadCompositeBtn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PNG
+          </button>
+          <button class="btn" id="copyCompositeBtn">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy Image
+          </button>
+          <button class="btn" id="closeCompositeBtn">Close</button>
+        </div>
+      </div>
+      <div class="composite-preview-scroll">
+        <img id="compositeResultImg" src="" alt="Generated Quadrants Image">
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Drag overlay -->
+  <div id="globalDropOverlay">Drop image into any square or tray!</div>
+
+  <script>
+    // ==========================================
+    // IndexedDB Storage Layer (Handles large screenshots safely)
+    // ==========================================
+    const DB_NAME = 'ScreenshotSorterDB';
+    const DB_VERSION = 1;
+    const STORE_ITEMS = 'screenshots';
+    const STORE_META = 'metadata';
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+          return resolve(null);
+        }
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_ITEMS)) {
+            db.createObjectStore(STORE_ITEMS, { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains(STORE_META)) {
+            db.createObjectStore(STORE_META, { keyPath: 'key' });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => {
+          console.warn('IndexedDB failed to open, fallback to localStorage', request.error);
+          resolve(null);
+        };
+      });
+    }
+
+    const Storage = {
+      dbPromise: openDB(),
+
+      async getAll() {
+        const db = await this.dbPromise;
+        if (!db) {
+          try {
+            return JSON.parse(localStorage.getItem('screenshot_items') || '[]');
+          } catch {
+            return [];
+          }
+        }
+        return new Promise((resolve) => {
+          try {
+            const tx = db.transaction(STORE_ITEMS, 'readonly');
+            const store = tx.objectStore(STORE_ITEMS);
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          } catch {
+            resolve([]);
+          }
+        });
+      },
+
+      async save(item) {
+        const db = await this.dbPromise;
+        if (!db) {
+          this._saveLocalStorage();
+          return;
+        }
+        return new Promise((resolve) => {
+          try {
+            const tx = db.transaction(STORE_ITEMS, 'readwrite');
+            const store = tx.objectStore(STORE_ITEMS);
+            store.put(item);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          } catch {
+            resolve(false);
+          }
+        });
+      },
+
+      async delete(id) {
+        const db = await this.dbPromise;
+        if (!db) {
+          this._saveLocalStorage();
+          return;
+        }
+        return new Promise((resolve) => {
+          try {
+            const tx = db.transaction(STORE_ITEMS, 'readwrite');
+            const store = tx.objectStore(STORE_ITEMS);
+            store.delete(id);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          } catch {
+            resolve(false);
+          }
+        });
+      },
+
+      async clearAll() {
+        try {
+          localStorage.removeItem('screenshot_items');
+          localStorage.removeItem('screenshot_titles');
+        } catch (e) {
+          console.error(e);
+        }
+
+        const db = await this.dbPromise;
+        if (!db) return;
+
+        return new Promise((resolve) => {
+          try {
+            const tx = db.transaction([STORE_ITEMS, STORE_META], 'readwrite');
+            tx.objectStore(STORE_ITEMS).clear();
+            tx.objectStore(STORE_META).clear();
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          } catch {
+            resolve(false);
+          }
+        });
+      },
+
+      async saveTitles(titles) {
+        try {
+          localStorage.setItem('screenshot_titles', JSON.stringify(titles));
+        } catch (e) {}
+
+        const db = await this.dbPromise;
+        if (!db) return;
+        try {
+          const tx = db.transaction(STORE_META, 'readwrite');
+          tx.objectStore(STORE_META).put({ key: 'titles', val: titles });
+        } catch (e) {}
+      },
+
+      async loadTitles() {
+        const db = await this.dbPromise;
+        if (db) {
+          const titles = await new Promise((resolve) => {
+            try {
+              const tx = db.transaction(STORE_META, 'readonly');
+              const req = tx.objectStore(STORE_META).get('titles');
+              req.onsuccess = () => resolve(req.result ? req.result.val : null);
+              req.onerror = () => resolve(null);
+            } catch {
+              resolve(null);
+            }
+          });
+          if (titles) return titles;
+        }
+        try {
+          return JSON.parse(localStorage.getItem('screenshot_titles') || 'null');
+        } catch {
+          return null;
+        }
+      },
+
+      _saveLocalStorage() {
+        try {
+          localStorage.setItem('screenshot_items', JSON.stringify(state.items));
+        } catch (e) {
+          console.warn('localStorage quota reached or unavailable:', e);
+        }
+      }
+    };
+
+    // ==========================================
+    // State management
+    // ==========================================
+    const state = {
+      items: [] // Array of { id, url, name, time, zone, createdAt }
+    };
+
+    let draggedItemId = null;
+    let activeQuickMenu = null;
+    let latestCompositeBlob = null;
+    let latestCompositeUrl = null;
+
+    // DOM Elements
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const createQuadrantImgBtn = document.getElementById('createQuadrantImgBtn');
+    const dropzoneBox = document.getElementById('dropzoneBox');
+    const imageModal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalCaption = document.getElementById('modalCaption');
+    const modalClose = document.getElementById('modalClose');
+    const compositeModal = document.getElementById('compositeModal');
+    const compositeResultImg = document.getElementById('compositeResultImg');
+    const downloadCompositeBtn = document.getElementById('downloadCompositeBtn');
+    const copyCompositeBtn = document.getElementById('copyCompositeBtn');
+    const closeCompositeBtn = document.getElementById('closeCompositeBtn');
+    const globalDropOverlay = document.getElementById('globalDropOverlay');
+    const storageStatus = document.getElementById('storageStatus');
+
+    function uid() {
+      return 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+    }
+
+    function showSaveIndicator() {
+      if (storageStatus) {
+        storageStatus.textContent = 'Saved';
+        storageStatus.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+        setTimeout(() => {
+          if (storageStatus) {
+            storageStatus.textContent = 'Saved Locally';
+            storageStatus.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+          }
+        }, 1200);
+      }
+    }
+
+    async function addScreenshot(dataUrl, name = 'Screenshot', targetZone = 'tray') {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const item = {
+        id: uid(),
+        url: dataUrl,
+        name: name,
+        time: timeStr,
+        zone: targetZone,
+        createdAt: Date.now()
+      };
+      state.items.push(item);
+      render();
+      await Storage.save(item);
+      showSaveIndicator();
+    }
+
+    function handleFiles(files, targetZone = 'tray') {
+      if (!files || files.length === 0) return;
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          addScreenshot(e.target.result, file.name, targetZone);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Clipboard Paste Support (Cmd+V / Ctrl+V)
+    window.addEventListener('paste', (e) => {
+      const clipboardData = e.clipboardData || window.clipboardData;
+      if (!clipboardData) return;
+      
+      const items = clipboardData.items;
+      let handled = false;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            addScreenshot(evt.target.result, `Pasted ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
+          };
+          reader.readAsDataURL(blob);
+          handled = true;
+        }
+      }
+      if (handled) e.preventDefault();
+    });
+
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    dropzoneBox.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files, 'tray');
+      fileInput.value = '';
+    });
+
+    // Clear All
+    clearAllBtn.addEventListener('click', async () => {
+      if (state.items.length === 0) return;
+      if (confirm('Clear all screenshots and saved storage?')) {
+        state.items = [];
+        render();
+        await Storage.clearAll();
+        showSaveIndicator();
+      }
+    });
+
+    // Save custom titles on edit
+    document.querySelectorAll('.square-title').forEach(el => {
+      el.addEventListener('blur', async () => {
+        const titles = {
+          sq1: document.getElementById('title-sq-1')?.textContent.trim(),
+          sq2: document.getElementById('title-sq-2')?.textContent.trim(),
+          sq3: document.getElementById('title-sq-3')?.textContent.trim(),
+          sq4: document.getElementById('title-sq-4')?.textContent.trim()
+        };
+        await Storage.saveTitles(titles);
+      });
+    });
+
+    // Export JSON metadata
+    exportBtn.addEventListener('click', () => {
+      if (state.items.length === 0) {
+        alert('No screenshots to export yet. Add some first!');
+        return;
+      }
+      const exportData = {
+        date: new Date().toISOString(),
+        titles: {
+          square1: document.getElementById('title-sq-1')?.textContent.trim(),
+          square2: document.getElementById('title-sq-2')?.textContent.trim(),
+          square3: document.getElementById('title-sq-3')?.textContent.trim(),
+          square4: document.getElementById('title-sq-4')?.textContent.trim(),
+        },
+        items: state.items.map(item => ({
+          name: item.name,
+          time: item.time,
+          zone: item.zone
+        }))
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `screenshot-quadrants-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Add sample screenshots
+    sampleBtn.addEventListener('click', () => {
+      const samples = [
+        { label: 'Login Screen UI', color: '#38bdf8', bg: '#0369a1' },
+        { label: 'Analytics Dashboard', color: '#a855f7', bg: '#7e22ce' },
+        { label: 'System Architecture', color: '#22c55e', bg: '#15803d' },
+        { label: 'Bug Report Modal', color: '#f59e0b', bg: '#b45309' }
+      ];
+
+      samples.forEach((s, idx) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 440;
+        canvas.height = 280;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#0b111e';
+        ctx.fillRect(0, 0, 440, 280);
+
+        // Header bar
+        ctx.fillStyle = '#172233';
+        ctx.fillRect(0, 0, 440, 36);
+
+        // Window buttons
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(18, 18, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#eab308';
+        ctx.beginPath(); ctx.arc(36, 18, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath(); ctx.arc(54, 18, 5, 0, Math.PI*2); ctx.fill();
+
+        // Card mockup
+        ctx.fillStyle = s.bg;
+        if (ctx.roundRect) ctx.roundRect(40, 60, 360, 180, 10);
+        else ctx.fillRect(40, 60, 360, 180);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.label, 220, 140);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '13px -apple-system, sans-serif';
+        ctx.fillText('Sample ' + (idx + 1) + ' · 1920×1080 Screenshot', 220, 170);
+
+        addScreenshot(canvas.toDataURL('image/png'), `${s.label}.png`);
+      });
+    });
+
+    // ==========================================
+    // DOM-TO-IMAGE: Create Quadrants Composite Image
+    // ==========================================
+    function getQuadrantMeta(zoneId) {
+      const config = {
+        'square-1': { id: 'title-sq-1', fallback: 'Square 1: Priority / Top Left', color: '#38bdf8' },
+        'square-2': { id: 'title-sq-2', fallback: 'Square 2: Reviews / Top Right', color: '#a855f7' },
+        'square-3': { id: 'title-sq-3', fallback: 'Square 3: References / Bottom Left', color: '#22c55e' },
+        'square-4': { id: 'title-sq-4', fallback: 'Square 4: Archive / Bottom Right', color: '#f59e0b' }
+      };
+      const conf = config[zoneId] || { id: null, fallback: 'Quadrant', color: '#38bdf8' };
+      const el = conf.id ? document.getElementById(conf.id) : null;
+      return {
+        title: el ? el.textContent.trim() : conf.fallback,
+        color: conf.color
+      };
+    }
+
+    createQuadrantImgBtn.addEventListener('click', async () => {
+      // 1. Gather all screenshots located in quadrants (square-1, square-2, square-3, square-4)
+      const quadrantItems = state.items.filter(item => item.zone.startsWith('square-'));
+
+      if (quadrantItems.length === 0) {
+        alert('No screenshots found in any of the four squares!\nDrag or move some screenshots into Square 1, 2, 3, or 4 first.');
+        return;
+      }
+
+      // Check if domtoimage library is available
+      if (typeof domtoimage === 'undefined' && typeof window.domtoimage === 'undefined') {
+        alert('dom-to-image library is still loading or unavailable. Please wait a moment and try again.');
+        return;
+      }
+
+      const dti = window.domtoimage || domtoimage;
+
+      // Loading state on button
+      const origText = createQuadrantImgBtn.innerHTML;
+      createQuadrantImgBtn.disabled = true;
+      createQuadrantImgBtn.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10"></path>
+        </svg>
+        Generating Image...
+      `;
+
+      try {
+        // Sort items by quadrant: square-1, square-2, square-3, square-4
+        const zoneOrder = ['square-1', 'square-2', 'square-3', 'square-4'];
+        quadrantItems.sort((a, b) => zoneOrder.indexOf(a.zone) - zoneOrder.indexOf(b.zone));
+
+        // Create the offscreen DOM container to render
+        // Note: Keep within viewport coordinates with z-index: -9999 and pointer-events: none
+        // so SVG foreignObject rasterizes all inner text, styling, and images accurately.
+        const wrapper = document.createElement('div');
+        wrapper.id = 'compositeExportContainer';
+        
+        // Multi-column or single column layout
+        const isMulti = quadrantItems.length > 1;
+        const containerWidth = isMulti ? 1440 : 880;
+
+        wrapper.style.position = 'fixed';
+        wrapper.style.left = '0';
+        wrapper.style.top = '0';
+        wrapper.style.zIndex = '-9999';
+        wrapper.style.pointerEvents = 'none';
+        wrapper.style.width = `${containerWidth}px`;
+        wrapper.style.backgroundColor = '#090d16';
+        wrapper.style.color = '#f8fafc';
+        wrapper.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+        wrapper.style.padding = '36px';
+        wrapper.style.boxSizing = 'border-box';
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.gap = '28px';
+
+        // Header inside composite image
+        const headerDiv = document.createElement('div');
+        headerDiv.style.display = 'flex';
+        headerDiv.style.justifyContent = 'space-between';
+        headerDiv.style.alignItems = 'center';
+        headerDiv.style.borderBottom = '2px solid #1e2c40';
+        headerDiv.style.paddingBottom = '18px';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.style.display = 'flex';
+        titleDiv.style.alignItems = 'center';
+        titleDiv.style.gap = '12px';
+        titleDiv.innerHTML = `
+          <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #38bdf8, #818cf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem; color: #090d16;">⊞</div>
+          <div>
+            <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0; color: #f8fafc; letter-spacing: -0.02em;">Screenshot Quadrants Overview</h2>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin: 2px 0 0 0;">Generated on ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at ${new Date().toLocaleTimeString()}</p>
+          </div>
+        `;
+
+        const badgeDiv = document.createElement('div');
+        badgeDiv.style.background = '#162234';
+        badgeDiv.style.border = '1px solid #283a54';
+        badgeDiv.style.borderRadius = '999px';
+        badgeDiv.style.padding = '6px 14px';
+        badgeDiv.style.fontSize = '0.85rem';
+        badgeDiv.style.color = '#94a3b8';
+        badgeDiv.style.fontWeight = '600';
+        badgeDiv.textContent = `${quadrantItems.length} ${quadrantItems.length === 1 ? 'Screenshot' : 'Screenshots'} in Quadrants`;
+
+        headerDiv.appendChild(titleDiv);
+        headerDiv.appendChild(badgeDiv);
+        wrapper.appendChild(headerDiv);
+
+        // Grid for the quadrant cards
+        const gridDiv = document.createElement('div');
+        gridDiv.style.display = 'grid';
+        gridDiv.style.gridTemplateColumns = isMulti ? '1fr 1fr' : '1fr';
+        gridDiv.style.gap = '24px';
+
+        // Populate cards
+        quadrantItems.forEach(item => {
+          const meta = getQuadrantMeta(item.zone);
+
+          const card = document.createElement('div');
+          card.style.background = '#111a28';
+          card.style.border = '1px solid #24354e';
+          card.style.borderRadius = '14px';
+          card.style.padding = '22px';
+          card.style.display = 'flex';
+          card.style.flexDirection = 'column';
+          card.style.gap = '14px';
+          card.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
+
+          // The Quadrant Title Header directly above the image
+          const cardHeader = document.createElement('div');
+          cardHeader.style.display = 'flex';
+          cardHeader.style.justifyContent = 'space-between';
+          cardHeader.style.alignItems = 'center';
+          cardHeader.style.borderBottom = '1px solid #1a273b';
+          cardHeader.style.paddingBottom = '10px';
+
+          const titleWrap = document.createElement('div');
+          titleWrap.style.display = 'flex';
+          titleWrap.style.alignItems = 'center';
+          titleWrap.style.gap = '10px';
+          titleWrap.innerHTML = `
+            <span style="display:inline-block; width: 14px; height: 14px; border-radius: 50%; background-color: ${meta.color}; box-shadow: 0 0 10px ${meta.color};"></span>
+            <span style="font-size: 1.15rem; font-weight: 700; color: #ffffff; letter-spacing: -0.01em;">${meta.title}</span>
+          `;
+
+          const metaWrap = document.createElement('div');
+          metaWrap.style.fontSize = '0.8rem';
+          metaWrap.style.color = '#94a3b8';
+          metaWrap.style.background = 'rgba(255, 255, 255, 0.05)';
+          metaWrap.style.padding = '3px 8px';
+          metaWrap.style.borderRadius = '6px';
+          metaWrap.textContent = item.name;
+
+          cardHeader.appendChild(titleWrap);
+          cardHeader.appendChild(metaWrap);
+          card.appendChild(cardHeader);
+
+          // The image rendered a bit larger (e.g. 640px+ wide container, high resolution, dark frame)
+          const imgContainer = document.createElement('div');
+          imgContainer.style.background = '#060a12';
+          imgContainer.style.border = '1px solid #1b283d';
+          imgContainer.style.borderRadius = '10px';
+          imgContainer.style.overflow = 'hidden';
+          imgContainer.style.display = 'flex';
+          imgContainer.style.alignItems = 'center';
+          imgContainer.style.justifyContent = 'center';
+          imgContainer.style.padding = '12px';
+          imgContainer.style.minHeight = '340px';
+          imgContainer.style.maxHeight = '520px';
+
+          const img = document.createElement('img');
+          img.src = item.url;
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '490px';
+          img.style.width = 'auto';
+          img.style.height = 'auto';
+          img.style.objectFit = 'contain';
+          img.style.borderRadius = '6px';
+          img.style.display = 'block';
+
+          imgContainer.appendChild(img);
+          card.appendChild(imgContainer);
+
+          gridDiv.appendChild(card);
+        });
+
+        wrapper.appendChild(gridDiv);
+        document.body.appendChild(wrapper);
+
+        // Wait for all images inside wrapper to be loaded
+        const imgElements = Array.from(wrapper.querySelectorAll('img'));
+        await Promise.all(imgElements.map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(res => {
+            img.onload = res;
+            img.onerror = res;
+          });
+        }));
+
+        // Small delay to ensure styles and fonts compute
+        await new Promise(r => setTimeout(r, 80));
+
+        // Use dom-to-image to render the node to a PNG data URL
+        const dataUrl = await dti.toPng(wrapper, {
+          bgcolor: '#090d16',
+          quality: 1.0
+        });
+
+        // Clean up temporary DOM node
+        document.body.removeChild(wrapper);
+
+        // Store latest composite data
+        latestCompositeUrl = dataUrl;
+
+        // Convert dataUrl to blob for copying/downloading
+        const res = await fetch(dataUrl);
+        latestCompositeBlob = await res.blob();
+
+        // Update modal and display the preview first (without auto-downloading)
+        compositeResultImg.src = dataUrl;
+        compositeModal.classList.add('active');
+
+      } catch (err) {
+        console.error('Failed to generate composite image with dom-to-image:', err);
+        alert('Failed to generate image: ' + (err.message || err));
+        const existingNode = document.getElementById('compositeExportContainer');
+        if (existingNode && existingNode.parentNode) {
+          existingNode.parentNode.removeChild(existingNode);
+        }
+      } finally {
+        createQuadrantImgBtn.disabled = false;
+        createQuadrantImgBtn.innerHTML = origText;
+      }
+    });
+
+    function downloadFile(url, filename) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    downloadCompositeBtn.addEventListener('click', () => {
+      if (latestCompositeUrl) {
+        downloadFile(latestCompositeUrl, `quadrant-screenshots-${Date.now()}.png`);
+      }
+    });
+
+    copyCompositeBtn.addEventListener('click', async () => {
+      if (!latestCompositeBlob) return;
+      try {
+        if (navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': latestCompositeBlob })
+          ]);
+          copyCompositeBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyCompositeBtn.innerHTML = `
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy Image
+            `;
+          }, 1500);
+        } else {
+          alert('Clipboard image copy not supported in this browser. Please use Download PNG.');
+        }
+      } catch (e) {
+        console.error('Failed to copy image:', e);
+        alert('Could not copy image to clipboard.');
+      }
+    });
+
+    closeCompositeBtn.addEventListener('click', () => {
+      compositeModal.classList.remove('active');
+    });
+
+    compositeModal.addEventListener('click', (e) => {
+      if (e.target === compositeModal) {
+        compositeModal.classList.remove('active');
+      }
+    });
+
+    // Close any open quick move menu when clicking elsewhere
+    document.addEventListener('click', (e) => {
+      if (activeQuickMenu && !activeQuickMenu.contains(e.target)) {
+        activeQuickMenu.classList.remove('show');
+        activeQuickMenu = null;
+      }
+    });
+
+    // Drag-and-drop file upload from OS
+    let dragCounter = 0;
+    window.addEventListener('dragenter', (e) => {
+      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+        dragCounter++;
+        globalDropOverlay.style.display = 'flex';
+      }
+    });
+
+    window.addEventListener('dragleave', (e) => {
+      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+        dragCounter--;
+        if (dragCounter <= 0) {
+          dragCounter = 0;
+          globalDropOverlay.style.display = 'none';
+        }
+      }
+    });
+
+    window.addEventListener('dragover', (e) => {
+      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+        e.preventDefault();
+      }
+    });
+
+    window.addEventListener('drop', (e) => {
+      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+        e.preventDefault();
+        dragCounter = 0;
+        globalDropOverlay.style.display = 'none';
+
+        const targetSquare = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-zone-id]');
+        const zoneId = targetSquare?.dataset?.zoneId || 'tray';
+        handleFiles(e.dataTransfer.files, zoneId);
+      }
+    });
+
+    // Render cards into zones
+    function render() {
+      const zones = {
+        'tray': document.getElementById('trayList'),
+        'square-1': document.querySelector('.square-1 .square-content'),
+        'square-2': document.querySelector('.square-2 .square-content'),
+        'square-3': document.querySelector('.square-3 .square-content'),
+        'square-4': document.querySelector('.square-4 .square-content')
+      };
+
+      Object.values(zones).forEach(el => {
+        if (el) el.innerHTML = '';
+      });
+
+      state.items.forEach(item => {
+        const container = zones[item.zone] || zones['tray'];
+        const card = createCardElement(item);
+        container.appendChild(card);
+      });
+
+      // Update counters
+      document.getElementById('trayCount').textContent = `${state.items.filter(i => i.zone === 'tray').length} items`;
+      for (let i = 1; i <= 4; i++) {
+        const count = state.items.filter(item => item.zone === `square-${i}`).length;
+        const countEl = document.querySelector(`.square-${i} .item-count`);
+        if (countEl) countEl.textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
+      }
+    }
+
+    async function moveItemTo(itemId, targetZone) {
+      const item = state.items.find(i => i.id === itemId);
+      if (item) {
+        item.zone = targetZone;
+        render();
+        await Storage.save(item);
+        showSaveIndicator();
+      }
+    }
+
+    function createCardElement(item) {
+      const card = document.createElement('div');
+      card.className = 'screenshot-card';
+      card.draggable = true;
+      card.id = item.id;
+      card.dataset.id = item.id;
+
+      card.innerHTML = `
+        <div class="img-wrapper">
+          <img src="${item.url}" alt="${item.name}">
+          <div class="card-actions">
+            <div class="quick-move-wrap">
+              <button class="icon-btn move-btn" title="Move to square...">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+              <div class="quick-move-menu">
+                <button class="quick-move-item" data-move="square-1">
+                  <span class="dot" style="background:var(--sq1)"></span>Square 1
+                </button>
+                <button class="quick-move-item" data-move="square-2">
+                  <span class="dot" style="background:var(--sq2)"></span>Square 2
+                </button>
+                <button class="quick-move-item" data-move="square-3">
+                  <span class="dot" style="background:var(--sq3)"></span>Square 3
+                </button>
+                <button class="quick-move-item" data-move="square-4">
+                  <span class="dot" style="background:var(--sq4)"></span>Square 4
+                </button>
+                <button class="quick-move-item" data-move="tray">
+                  <span class="dot" style="background:#64748b"></span>Unassigned
+                </button>
+              </div>
+            </div>
+            <button class="icon-btn zoom-btn" title="View full size">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <line x1="11" y1="8" x2="11" y2="14"></line>
+                <line x1="8" y1="11" x2="14" y2="11"></line>
+              </svg>
+            </button>
+            <button class="icon-btn delete-btn" title="Delete screenshot">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="card-meta">
+          <span class="card-title-text" title="${item.name}">${item.name}</span>
+          <span>${item.time}</span>
+        </div>
+      `;
+
+      // Quick move toggle
+      const moveBtn = card.querySelector('.move-btn');
+      const moveMenu = card.querySelector('.quick-move-menu');
+      moveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeQuickMenu && activeQuickMenu !== moveMenu) {
+          activeQuickMenu.classList.remove('show');
+        }
+        moveMenu.classList.toggle('show');
+        activeQuickMenu = moveMenu.classList.contains('show') ? moveMenu : null;
+      });
+
+      // Quick move item click
+      card.querySelectorAll('.quick-move-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const targetZone = btn.dataset.move;
+          moveMenu.classList.remove('show');
+          activeQuickMenu = null;
+          moveItemTo(item.id, targetZone);
+        });
+      });
+
+      // Zoom preview handler
+      card.querySelector('.zoom-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openModal(item.url, item.name);
+      });
+
+      // Double-click card to zoom
+      card.addEventListener('dblclick', () => {
+        openModal(item.url, item.name);
+      });
+
+      // Delete handler
+      card.querySelector('.delete-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        state.items = state.items.filter(i => i.id !== item.id);
+        render();
+        await Storage.delete(item.id);
+      });
+
+      // Drag events for screenshot card
+      card.addEventListener('dragstart', (e) => {
+        draggedItemId = item.id;
+        card.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', item.id);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      card.addEventListener('dragend', () => {
+        draggedItemId = null;
+        card.classList.remove('dragging');
+        document.querySelectorAll('.square-box, .drop-target').forEach(el => {
+          el.classList.remove('drag-over');
+        });
+      });
+
+      return card;
+    }
+
+    // Drop zones setup (4 squares and tray)
+    const dropTargets = document.querySelectorAll('.drop-target');
+    dropTargets.forEach(target => {
+      target.addEventListener('dragover', (e) => {
+        if (!draggedItemId) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const box = target.closest('.square-box') || target;
+        box.classList.add('drag-over');
+      });
+
+      target.addEventListener('dragleave', (e) => {
+        const box = target.closest('.square-box') || target;
+        if (!box.contains(e.relatedTarget)) {
+          box.classList.remove('drag-over');
+        }
+      });
+
+      target.addEventListener('drop', (e) => {
+        if (!draggedItemId) return;
+        e.preventDefault();
+        const box = target.closest('.square-box') || target;
+        box.classList.remove('drag-over');
+
+        const zoneId = target.dataset.zoneId || target.closest('[data-zone-id]')?.dataset.zoneId;
+        if (zoneId) {
+          moveItemTo(draggedItemId, zoneId);
+        }
+      });
+    });
+
+    // Modal controls
+    function openModal(src, caption) {
+      modalImg.src = src;
+      modalCaption.textContent = caption;
+      imageModal.classList.add('active');
+    }
+
+    function closeModal() {
+      imageModal.classList.remove('active');
+      modalImg.src = '';
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    imageModal.addEventListener('click', (e) => {
+      if (e.target === imageModal) closeModal();
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        compositeModal.classList.remove('active');
+      }
+    });
+
+    // ==========================================
+    // Initial load from storage on startup / refresh
+    // ==========================================
+    async function init() {
+      // 1. Restore saved titles if any
+      const titles = await Storage.loadTitles();
+      if (titles) {
+        if (titles.sq1 && document.getElementById('title-sq-1')) document.getElementById('title-sq-1').textContent = titles.sq1;
+        if (titles.sq2 && document.getElementById('title-sq-2')) document.getElementById('title-sq-2').textContent = titles.sq2;
+        if (titles.sq3 && document.getElementById('title-sq-3')) document.getElementById('title-sq-3').textContent = titles.sq3;
+        if (titles.sq4 && document.getElementById('title-sq-4')) document.getElementById('title-sq-4').textContent = titles.sq4;
+      }
+
+      // 2. Restore saved screenshot items
+      const savedItems = await Storage.getAll();
+      if (savedItems && savedItems.length > 0) {
+        state.items = savedItems;
+      }
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
