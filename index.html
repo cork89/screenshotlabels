@@ -3,691 +3,247 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Screenshot Sorter · 4 Quadrants</title>
+  <title>ProofSheet · Screenshot Matrix Workbench</title>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #131d2e;
-      --card-border: #24344d;
-      --accent: #38bdf8;
-      --accent-hover: #0ea5e9;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --tray-bg: #101927;
-      --dropzone-bg: #111a28;
-      --dropzone-hover: #182844;
-      --border-radius: 12px;
-      --sq1: #38bdf8;
-      --sq2: #a855f7;
-      --sq3: #22c55e;
-      --sq4: #f59e0b;
+      --bg-base: #0b0f17;
+      --bg-surface: #121824;
+      --bg-panel: #182030;
+      --bg-card: #141c2a;
+      --bg-card-hover: #1b263b;
+      --border-dim: #1e293b;
+      --border-subtle: #27354d;
+      --border-focus: #3b82f6;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-cobalt: #2563eb;
+      --accent-cobalt-hover: #1d4ed8;
+      --accent-crimson: #ef4444;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 1.25rem;
-      gap: 1rem;
+      font-family: var(--font-sans); background: var(--bg-base); color: var(--text-primary);
+      min-height: 100vh; display: flex; flex-direction: column; padding: 1rem 1.25rem; gap: 0.85rem;
+      -webkit-font-smoothing: antialiased;
     }
+    :focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
+    /* Header Bar */
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+      padding: 0.75rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: var(--radius-lg);
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+    .brand { display: flex; align-items: center; gap: 0.9rem; }
+    .brand-mark {
+      width: 38px; height: 38px; background: var(--bg-panel); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); display: grid; grid-template: 1fr 1fr / 1fr 1fr; padding: 7px; gap: 3px;
     }
+    .mark-cell { border-radius: 2px; }
+    .mark-cell.c1 { background: #38bdf8; }
+    .mark-cell.c2 { background: #f59e0b; }
+    .mark-cell.c3 { background: #10b981; }
+    .mark-cell.c4 { background: #a855f7; }
 
-    .brand-icon {
-      width: 38px;
-      height: 38px;
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.25rem;
-      color: #090d16;
-      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+    .brand-identity { display: flex; flex-direction: column; gap: 0.15rem; }
+    .brand-header-row { display: flex; align-items: center; gap: 0.7rem; }
+    .brand-title { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.025em; }
+    .status-indicator {
+      display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono);
+      font-size: 0.68rem; font-weight: 500; color: var(--text-secondary); background: var(--bg-base);
+      padding: 0.15rem 0.55rem; border-radius: var(--radius-sm); border: 1px solid var(--border-dim);
     }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; transition: all 0.3s; }
+    .brand-subtitle { font-size: 0.78rem; color: var(--text-secondary); }
 
-    .brand-title h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    .storage-badge {
-      font-size: 0.65rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.2rem 0.5rem;
-      border-radius: 999px;
-      background: rgba(34, 197, 94, 0.15);
-      color: #4ade80;
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .storage-badge::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #4ade80;
-    }
-
-    .brand-title p {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-    }
-
-    .actions {
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
+    /* Action Buttons */
+    .actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      background: #1e2c40;
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 0.5rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.84rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      display: inline-flex; align-items: center; gap: 0.45rem; background: var(--bg-panel);
+      border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 0.48rem 0.85rem;
+      border-radius: var(--radius-md); font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; line-height: 1;
+    }
+    .btn:hover { background: #202b40; border-color: #3b4d6e; color: #fff; }
+    .btn svg { flex-shrink: 0; stroke-width: 2; }
+    .btn-hero { background: var(--accent-cobalt); color: #fff; border-color: #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+    .btn-hero:hover { background: var(--accent-cobalt-hover); border-color: #60a5fa; box-shadow: 0 2px 10px rgba(37,99,235,.4); }
+    .btn-hero:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+    .btn-danger { background: rgba(239,68,68,.12); color: #f87171; border-color: rgba(239,68,68,.25); }
+    .btn-danger:hover { background: rgba(239,68,68,.22); border-color: rgba(239,68,68,.5); color: #fca5a5; }
+
+    /* Main Workspace */
+    .workspace-layout { display: grid; grid-template-columns: 1fr 340px; gap: 0.85rem; flex: 1; min-height: 0; }
+    @media (max-width: 1040px) { .workspace-layout { grid-template-columns: 1fr; } }
+
+    /* 4 Quadrants Matrix */
+    .matrix-grid { display: grid; grid-template: 1fr 1fr / 1fr 1fr; gap: 0.85rem; min-height: 640px; }
+    @media (max-width: 680px) { .matrix-grid { grid-template-columns: 1fr; grid-template-rows: auto; } }
+
+    .matrix-cell {
+      background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: var(--radius-lg);
+      display: flex; flex-direction: column; position: relative; overflow: hidden;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .matrix-cell::before, .matrix-cell::after {
+      content: '+'; position: absolute; font-family: var(--font-mono); font-size: 0.75rem;
+      color: var(--border-subtle); pointer-events: none; z-index: 2;
+    }
+    .matrix-cell::before { top: 6px; right: 8px; }
+    .matrix-cell::after { bottom: 6px; left: 8px; }
+
+    /* Quadrant Accents */
+    .cell-q1 { --q-color: #38bdf8; }
+    .cell-q2 { --q-color: #f59e0b; }
+    .cell-q3 { --q-color: #10b981; }
+    .cell-q4 { --q-color: #a855f7; }
+    .matrix-cell { border-color: color-mix(in srgb, var(--q-color, var(--border-dim)) 22%, transparent); }
+    .matrix-cell.drag-over, .dock-panel.drag-over {
+      border-color: var(--q-color, var(--border-focus)) !important;
+      background: color-mix(in srgb, var(--q-color, var(--border-focus)) 8%, var(--bg-surface));
     }
 
-    .btn:hover {
-      background: #283a54;
-      border-color: #3b5275;
+    .cell-header {
+      display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.9rem;
+      background: var(--bg-panel); border-bottom: 1px solid var(--border-dim); gap: 0.5rem;
+    }
+    .cell-identity { display: flex; align-items: center; gap: 0.55rem; min-width: 0; flex: 1; }
+    .coord-badge {
+      font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.4rem;
+      border-radius: var(--radius-sm); line-height: 1; background: color-mix(in srgb, var(--q-color) 15%, transparent);
+      color: var(--q-color); flex-shrink: 0;
+    }
+    .editable-label {
+      font-size: 0.88rem; font-weight: 600; color: var(--text-primary); outline: none; cursor: text;
+      padding: 2px 5px; border-radius: var(--radius-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .editable-label:focus { background: var(--bg-base); box-shadow: 0 0 0 1px var(--border-focus); }
+    .counter-pill {
+      font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-secondary); background: var(--bg-base);
+      border: 1px solid var(--border-dim); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-weight: 500;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #090d16;
-      border: none;
-      font-weight: 600;
+    .cell-body {
+      flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.65rem;
+      padding: 0.75rem; align-content: start; overflow-y: auto; min-height: 180px;
     }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      box-shadow: 0 2px 10px rgba(56, 189, 248, 0.35);
+    .cell-body:empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0.4rem; color: var(--text-muted); font-size: 0.8rem; border: 1px dashed var(--border-dim);
+      margin: 0.75rem; border-radius: var(--radius-md); background: rgba(0,0,0,.15);
     }
+    .cell-body:empty::before { content: '✛'; font-size: 1.25rem; color: var(--border-subtle); }
+    .cell-body:empty::after { content: 'Drop or move screenshots here'; font-weight: 500; }
 
-    .btn-composite {
-      background: linear-gradient(135deg, #0284c7 0%, #6366f1 100%);
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    /* Staging Dock */
+    .dock-panel {
+      background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: var(--radius-lg);
+      display: flex; flex-direction: column; overflow: hidden; max-height: calc(100vh - 95px);
+      transition: border-color 0.15s, background-color 0.15s;
     }
-
-    .btn-composite:hover {
-      background: linear-gradient(135deg, #0369a1 0%, #4f46e5 100%);
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
-      border-color: rgba(255, 255, 255, 0.3);
-      color: #ffffff;
+    .dock-header { padding: 0.85rem 1rem; background: var(--bg-panel); border-bottom: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 0.75rem; }
+    .dock-title-row { display: flex; justify-content: space-between; align-items: center; }
+    .dock-title { font-size: 0.9rem; font-weight: 700; }
+    .intake-cue {
+      display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--text-secondary);
+      background: var(--bg-base); padding: 0.35rem 0.55rem; border-radius: var(--radius-sm); border: 1px solid var(--border-dim);
     }
-
-    .btn-composite:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .key-cap { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; background: var(--bg-panel); color: var(--text-primary); padding: 0.15rem 0.35rem; border-radius: 3px; border: 1px solid var(--border-subtle); }
+    .drop-intake-box {
+      border: 1px dashed var(--border-subtle); border-radius: var(--radius-md); padding: 0.9rem 0.75rem; text-align: center;
+      cursor: pointer; background: rgba(11,15,23,.4); transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
     }
+    .drop-intake-box:hover { border-color: var(--border-focus); background: rgba(37,99,235,.05); }
+    .drop-intake-box svg { width: 22px; height: 22px; stroke: var(--text-secondary); transition: stroke 0.15s; }
+    .drop-intake-box:hover svg { stroke: var(--border-focus); }
+    .drop-intake-text { font-size: 0.78rem; color: var(--text-secondary); font-weight: 500; }
+    .drop-intake-text span { color: #60a5fa; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
-    .btn-danger {
-      background: #ef44441a;
-      color: #f87171;
-      border-color: #ef444433;
+    .dock-items-area {
+      flex: 1; padding: 0.75rem; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.65rem; align-content: start;
     }
-
-    .btn-danger:hover {
-      background: #ef44442a;
-      border-color: #ef444466;
+    .dock-items-area:empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: 3rem 1.5rem; gap: 0.5rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.4;
     }
-
-    #fileInput {
-      display: none;
-    }
-
-    /* Main layout: 4 Squares + Staging Tray */
-    .layout-container {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 1.25rem;
-      flex: 1;
-      min-height: 0;
-    }
-
-    @media (max-width: 1024px) {
-      .layout-container {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* The 4 Squares Area */
-    .quadrants-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 1rem;
-      min-height: 620px;
-      height: 100%;
-    }
-
-    .square-box {
-      background-color: var(--dropzone-bg);
-      border: 2px dashed var(--card-border);
-      border-radius: var(--border-radius);
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .square-box.drag-over {
-      border-color: var(--accent);
-      background-color: var(--dropzone-hover);
-      box-shadow: 0 0 24px rgba(56, 189, 248, 0.2);
-    }
-
-    .square-1 { border-color: rgba(56, 189, 248, 0.25); }
-    .square-2 { border-color: rgba(168, 85, 247, 0.25); }
-    .square-3 { border-color: rgba(34, 197, 94, 0.25); }
-    .square-4 { border-color: rgba(245, 158, 11, 0.25); }
-
-    .square-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      padding-bottom: 0.5rem;
-    }
-
-    .square-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      outline: none;
-      cursor: text;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    .square-title:focus {
-      background: #1e2c40;
-      box-shadow: 0 0 0 1px var(--accent);
-    }
-
-    .square-indicator {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .square-1 .square-indicator { background: var(--sq1); box-shadow: 0 0 8px var(--sq1); }
-    .square-2 .square-indicator { background: var(--sq2); box-shadow: 0 0 8px var(--sq2); }
-    .square-3 .square-indicator { background: var(--sq3); box-shadow: 0 0 8px var(--sq3); }
-    .square-4 .square-indicator { background: var(--sq4); box-shadow: 0 0 8px var(--sq4); }
-
-    .item-count {
-      font-size: 0.75rem;
-      background: rgba(255, 255, 255, 0.08);
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .square-content {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 0.75rem;
-      align-content: start;
-      overflow-y: auto;
-      padding: 0.25rem;
-      min-height: 140px;
-    }
-
-    .square-content:empty::after {
-      content: 'Drop screenshots here';
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      min-height: 140px;
-      grid-column: 1 / -1;
-      color: #4b5d78;
-      font-size: 0.85rem;
-      font-style: italic;
-      pointer-events: none;
-    }
-
-    /* Staging Tray / Inbox */
-    .tray-container {
-      background-color: var(--tray-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--border-radius);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      max-height: calc(100vh - 105px);
-    }
-
-    .tray-header {
-      padding: 1rem;
-      border-bottom: 1px solid var(--card-border);
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .tray-title-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .tray-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #e2e8f0;
-    }
-
-    .paste-hint {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
-    .kbd {
-      background: #1e2c40;
-      padding: 0.15rem 0.4rem;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-family: inherit;
-      color: #e2e8f0;
-      border: 1px solid #334460;
-    }
-
-    /* Upload Drop Zone in Tray */
-    .dropzone-trigger {
-      border: 2px dashed #2f4360;
-      border-radius: 8px;
-      padding: 1.1rem 0.75rem;
-      text-align: center;
-      cursor: pointer;
-      background: rgba(9, 13, 22, 0.5);
-      transition: all 0.2s ease;
-    }
-
-    .dropzone-trigger:hover {
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.06);
-    }
-
-    .dropzone-trigger svg {
-      width: 26px;
-      height: 26px;
-      margin-bottom: 0.3rem;
-      stroke: var(--accent);
-    }
-
-    .dropzone-trigger p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .dropzone-trigger span {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .tray-items {
-      flex: 1;
-      padding: 0.85rem;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 0.75rem;
-      align-content: start;
-    }
-
-    .tray-items:empty::after {
-      content: 'No screenshots waiting.\nPaste (⌘+V) or drop here!';
-      white-space: pre-line;
-      grid-column: 1 / -1;
-      color: #4b5d78;
-      font-size: 0.85rem;
-      text-align: center;
-      margin-top: 3rem;
-      line-height: 1.5;
-    }
+    .dock-items-area:empty::before { content: '∅'; font-family: var(--font-mono); font-size: 1.75rem; color: var(--border-subtle); }
+    .dock-items-area:empty::after { content: 'No screenshots waiting in tray. Paste or browse to begin.'; }
 
     /* Screenshot Card */
     .screenshot-card {
-      background: #0d1522;
-      border: 1px solid #23334d;
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: grab;
-      position: relative;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-      display: flex;
-      flex-direction: column;
+      background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: var(--radius-md);
+      overflow: hidden; cursor: grab; position: relative; transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+      display: flex; flex-direction: column;
     }
-
-    .screenshot-card:hover {
-      border-color: #3b5278;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+    .screenshot-card:hover { border-color: var(--border-subtle); background: var(--bg-card-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+    .screenshot-card.dragging { opacity: 0.35; transform: scale(0.96); cursor: grabbing; border-color: var(--border-focus); }
+    .img-frame { position: relative; width: 100%; height: 96px; background: #080c12; display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--border-dim); }
+    .screenshot-card img { max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; }
+    .card-actions-dock {
+      position: absolute; top: 4px; right: 4px; display: flex; gap: 3px; opacity: 0; transition: opacity 0.12s;
+      background: rgba(11,15,23,.9); backdrop-filter: blur(4px); border-radius: var(--radius-sm); padding: 2px; border: 1px solid var(--border-subtle);
     }
+    .screenshot-card:hover .card-actions-dock { opacity: 1; }
+    .tool-btn { background: transparent; border: none; color: var(--text-secondary); padding: 3px; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .tool-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .tool-btn.delete-btn:hover { background: var(--accent-crimson); color: #fff; }
 
-    .screenshot-card.dragging {
-      opacity: 0.3;
-      transform: scale(0.96);
-      cursor: grabbing;
+    .quick-dispatch { position: relative; }
+    .dispatch-menu {
+      display: none; position: absolute; top: calc(100% + 4px); right: 0; background: var(--bg-panel);
+      border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 4px; min-width: 130px; z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,.7); flex-direction: column; gap: 2px;
     }
-
-    .img-wrapper {
-      position: relative;
-      width: 100%;
-      height: 98px;
-      background: #060a12;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+    .dispatch-menu.show { display: flex; }
+    .dispatch-item {
+      display: flex; align-items: center; gap: 6px; padding: 5px 8px; font-size: 0.72rem; color: var(--text-primary);
+      border-radius: var(--radius-sm); background: transparent; border: none; cursor: pointer; width: 100%; transition: background 0.12s;
     }
+    .dispatch-item:hover { background: var(--bg-card-hover); }
+    .dispatch-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
 
-    .screenshot-card img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      pointer-events: none;
-      display: block;
+    .card-footer { padding: 0.35rem 0.55rem; font-size: 0.68rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; background: var(--bg-card); }
+    .card-filename { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); font-weight: 500; }
+    .card-time { font-family: var(--font-mono); font-size: 0.62rem; flex-shrink: 0; }
+
+    /* Modals */
+    .overlay-backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(6,9,14,.92); backdrop-filter: blur(8px);
+      z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;
     }
+    .overlay-backdrop.active { display: flex; }
+    .lightbox-frame { max-width: 92vw; max-height: 92vh; position: relative; display: flex; flex-direction: column; align-items: center; }
+    .lightbox-frame img { max-width: 100%; max-height: 82vh; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); box-shadow: 0 20px 60px rgba(0,0,0,.9); object-fit: contain; }
+    .overlay-close-btn { position: absolute; top: -36px; right: 0; color: var(--text-secondary); font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 4px; }
+    .overlay-close-btn:hover { color: #fff; }
+    .lightbox-caption { margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-secondary); font-family: var(--font-mono); }
 
-    .card-actions {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      display: flex;
-      gap: 3px;
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      background: rgba(9, 13, 22, 0.85);
-      backdrop-filter: blur(4px);
-      border-radius: 6px;
-      padding: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Composite Modal */
+    .composite-dialog {
+      background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+      max-width: 95vw; max-height: 92vh; width: 1120px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,.85);
     }
+    .composite-dialog-header { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center; background: var(--bg-panel); flex-wrap: wrap; gap: 0.75rem; }
+    .composite-dialog-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    .composite-dialog-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .composite-canvas-scroll { flex: 1; overflow: auto; padding: 1.5rem; background: #080b10; display: flex; justify-content: center; }
+    #compositeResultImg { max-width: 100%; height: auto; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); box-shadow: 0 10px 35px rgba(0,0,0,.8); display: block; }
 
-    .screenshot-card:hover .card-actions {
-      opacity: 1;
-    }
-
-    .icon-btn {
-      background: transparent;
-      border: none;
-      color: #cbd5e1;
-      padding: 3px;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s ease;
-    }
-
-    .icon-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-    }
-
-    .icon-btn.delete-btn:hover {
-      background: #ef4444;
-      color: #fff;
-    }
-
-    /* Quick move dropdown */
-    .quick-move-wrap {
-      position: relative;
-    }
-
-    .quick-move-menu {
-      display: none;
-      position: absolute;
-      top: calc(100% + 4px);
-      right: 0;
-      background: #172233;
-      border: 1px solid #2d415f;
-      border-radius: 6px;
-      padding: 4px;
-      min-width: 120px;
-      z-index: 100;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-    }
-
-    .quick-move-menu.show {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .quick-move-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      font-size: 0.72rem;
-      color: #cbd5e1;
-      border-radius: 4px;
-      background: transparent;
-      border: none;
-      text-align: left;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .quick-move-item:hover {
-      background: #25364f;
-      color: #fff;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .card-meta {
-      padding: 0.35rem 0.5rem;
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      background: #0d1522;
-      border-top: 1px solid #1a273b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .card-title-text {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 70px;
-    }
-
-    /* Lightbox Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.88);
-      backdrop-filter: blur(8px);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-content {
-      max-width: 92vw;
-      max-height: 92vh;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .modal-content img {
-      max-width: 100%;
-      max-height: 82vh;
-      border-radius: 8px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.9);
-      object-fit: contain;
-    }
-
-    .modal-close {
-      position: absolute;
-      top: -38px;
-      right: 0;
-      color: #fff;
-      font-size: 2rem;
-      line-height: 1;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-
-    .modal-caption {
-      margin-top: 0.75rem;
-      font-size: 0.85rem;
-      color: #cbd5e1;
-    }
-
-    /* Composite Image Modal */
-    .composite-modal-box {
-      background: #111a28;
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      max-width: 95vw;
-      max-height: 92vh;
-      width: 1080px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
-    }
-
-    .composite-modal-header {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid #1e2c40;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #162234;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-
-    .composite-modal-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .composite-modal-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .composite-preview-scroll {
-      flex: 1;
-      overflow: auto;
-      padding: 1.5rem;
-      background: #090d16;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    #compositeResultImg {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-      display: block;
-    }
-
-    /* Global drop overlay indicator */
+    /* Drop Overlay & Spin */
     #globalDropOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(56, 189, 248, 0.15);
-      border: 3px dashed var(--accent);
-      z-index: 9998;
-      pointer-events: none;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--accent);
-      backdrop-filter: blur(2px);
+      display: none; position: fixed; inset: 0; background: rgba(11,15,23,.85); border: 2px dashed var(--border-focus);
+      z-index: 9998; pointer-events: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);
     }
+    .drop-banner { background: var(--bg-surface); border: 1px solid var(--border-focus); padding: 1.5rem 2.5rem; border-radius: var(--radius-lg); font-size: 1.15rem; font-weight: 700; color: #60a5fa; display: flex; align-items: center; gap: 0.75rem; }
+    .spin { animation: spin 0.8s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
   <script src="dom-to-image.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
@@ -696,1095 +252,547 @@
 
   <header>
     <div class="brand">
-      <div class="brand-icon">⊞</div>
-      <div class="brand-title">
-        <h1>
-          Screenshot Sorter
-          <span class="storage-badge" id="storageStatus" title="Saved locally in browser storage">Saved Locally</span>
-        </h1>
-        <p>Paste or drop screenshots, then drag them into any of the four squares (persisted across refreshes)</p>
+      <div class="brand-mark" aria-hidden="true">
+        <div class="mark-cell c1"></div><div class="mark-cell c2"></div>
+        <div class="mark-cell c3"></div><div class="mark-cell c4"></div>
+      </div>
+      <div class="brand-identity">
+        <div class="brand-header-row">
+          <h1 class="brand-title">ProofSheet</h1>
+          <div class="status-indicator" title="Synced to browser IndexedDB">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="storageStatusText">Local Ready</span>
+          </div>
+        </div>
+        <p class="brand-subtitle">Visual quadrant triage &amp; contact sheet synthesizer</p>
       </div>
     </div>
+
     <div class="actions">
-      <button class="btn btn-primary" id="uploadBtn">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
-        Add Images
+      <button class="btn" id="uploadBtn">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg>Add Images
       </button>
       <button class="btn" id="sampleBtn">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-        Add Samples
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Add Samples
       </button>
-      <button class="btn btn-composite" id="createQuadrantImgBtn" title="Render all quadrant screenshots into a single image with quadrant titles above each image">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-        Create Quadrants Image
+      <button class="btn btn-hero" id="createQuadrantImgBtn">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Generate Proof Sheet
       </button>
-      <button class="btn" id="exportBtn" title="Download layout summary">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export JSON
+      <button class="btn" id="exportBtn">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export JSON
       </button>
       <button class="btn btn-danger" id="clearAllBtn">Clear All</button>
-      <input type="file" id="fileInput" multiple accept="image/*">
+      <input type="file" id="fileInput" multiple accept="image/*" style="display:none">
     </div>
   </header>
 
-  <div class="layout-container">
-    <!-- The 4 Squares -->
-    <div class="quadrants-grid">
-      <!-- Square 1 -->
-      <div class="square-box square-1 drop-target" data-zone-id="square-1">
-        <div class="square-header">
-          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="1">
-            <span class="square-indicator"></span>
-            <span class="title-text" id="title-sq-1">Square 1: Priority / Top Left</span>
+  <main class="workspace-layout">
+    <section class="matrix-grid">
+      <article class="matrix-cell cell-q1" data-zone-id="square-1">
+        <header class="cell-header">
+          <div class="cell-identity">
+            <span class="coord-badge">1</span>
+            <div class="editable-label" contenteditable="true" spellcheck="false" id="title-sq-1">Priority Issues</div>
           </div>
-          <span class="item-count">0 items</span>
-        </div>
-        <div class="square-content drop-target" data-zone-id="square-1"></div>
-      </div>
+          <span class="counter-pill" id="count-sq-1">0 items</span>
+        </header>
+        <div class="cell-body"></div>
+      </article>
 
-      <!-- Square 2 -->
-      <div class="square-box square-2 drop-target" data-zone-id="square-2">
-        <div class="square-header">
-          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="2">
-            <span class="square-indicator"></span>
-            <span class="title-text" id="title-sq-2">Square 2: Reviews / Top Right</span>
+      <article class="matrix-cell cell-q2" data-zone-id="square-2">
+        <header class="cell-header">
+          <div class="cell-identity">
+            <span class="coord-badge">2</span>
+            <div class="editable-label" contenteditable="true" spellcheck="false" id="title-sq-2">Design References</div>
           </div>
-          <span class="item-count">0 items</span>
-        </div>
-        <div class="square-content drop-target" data-zone-id="square-2"></div>
-      </div>
+          <span class="counter-pill" id="count-sq-2">0 items</span>
+        </header>
+        <div class="cell-body"></div>
+      </article>
 
-      <!-- Square 3 -->
-      <div class="square-box square-3 drop-target" data-zone-id="square-3">
-        <div class="square-header">
-          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="3">
-            <span class="square-indicator"></span>
-            <span class="title-text" id="title-sq-3">Square 3: References / Bottom Left</span>
+      <article class="matrix-cell cell-q3" data-zone-id="square-3">
+        <header class="cell-header">
+          <div class="cell-identity">
+            <span class="coord-badge">3</span>
+            <div class="editable-label" contenteditable="true" spellcheck="false" id="title-sq-3">Typography &amp; UI Polish</div>
           </div>
-          <span class="item-count">0 items</span>
-        </div>
-        <div class="square-content drop-target" data-zone-id="square-3"></div>
-      </div>
+          <span class="counter-pill" id="count-sq-3">0 items</span>
+        </header>
+        <div class="cell-body"></div>
+      </article>
 
-      <!-- Square 4 -->
-      <div class="square-box square-4 drop-target" data-zone-id="square-4">
-        <div class="square-header">
-          <div class="square-title" contenteditable="true" spellcheck="false" title="Click to rename" data-square="4">
-            <span class="square-indicator"></span>
-            <span class="title-text" id="title-sq-4">Square 4: Archive / Bottom Right</span>
+      <article class="matrix-cell cell-q4" data-zone-id="square-4">
+        <header class="cell-header">
+          <div class="cell-identity">
+            <span class="coord-badge">4</span>
+            <div class="editable-label" contenteditable="true" spellcheck="false" id="title-sq-4">Accepted &amp; Archived</div>
           </div>
-          <span class="item-count">0 items</span>
-        </div>
-        <div class="square-content drop-target" data-zone-id="square-4"></div>
-      </div>
-    </div>
+          <span class="counter-pill" id="count-sq-4">0 items</span>
+        </header>
+        <div class="cell-body"></div>
+      </article>
+    </section>
 
-    <!-- Right Side Staging / Inbox Tray -->
-    <div class="tray-container drop-target" data-zone-id="tray">
-      <div class="tray-header">
-        <div class="tray-title-row">
-          <span class="tray-title">Unassigned Screenshots</span>
-          <span class="item-count" id="trayCount">0 items</span>
+    <aside class="dock-panel" data-zone-id="tray">
+      <div class="dock-header">
+        <div class="dock-title-row">
+          <span class="dock-title">Intake Staging</span>
+          <span class="counter-pill" id="trayCount">0 items</span>
         </div>
-        <div class="paste-hint">
-          <span>Press</span>
-          <span class="kbd">⌘ + V</span>
-          <span>or</span>
-          <span class="kbd">Ctrl + V</span>
-          <span>to paste from clipboard</span>
+        <div class="intake-cue">
+          <span>Direct Paste</span><span class="key-cap">⌘V</span><span>or</span><span class="key-cap">Ctrl+V</span>
         </div>
-        <div class="dropzone-trigger" id="dropzoneBox">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <polyline points="21 15 16 10 5 21"/>
-          </svg>
-          <p><span>Browse files</span> or drop here</p>
+        <div class="drop-intake-box" id="dropzoneBox" role="button" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p class="drop-intake-text"><span>Browse files</span> or drop here</p>
         </div>
       </div>
-      <div class="tray-items drop-target" id="trayList" data-zone-id="tray"></div>
-    </div>
-  </div>
+      <div class="dock-items-area" id="trayList"></div>
+    </aside>
+  </main>
 
-  <!-- Fullscreen Lightbox Modal -->
-  <div class="modal-overlay" id="imageModal">
-    <div class="modal-content">
-      <button class="modal-close" id="modalClose">&times;</button>
+  <!-- Lightbox -->
+  <div class="overlay-backdrop" id="imageModal" role="dialog" aria-modal="true">
+    <div class="lightbox-frame">
+      <button class="overlay-close-btn" id="modalClose">&times;</button>
       <img id="modalImg" src="" alt="Expanded preview">
-      <div class="modal-caption" id="modalCaption"></div>
+      <div class="lightbox-caption" id="modalCaption"></div>
     </div>
   </div>
 
-  <!-- Composite Image Export Modal -->
-  <div class="modal-overlay" id="compositeModal">
-    <div class="composite-modal-box">
-      <div class="composite-modal-header">
-        <div class="composite-modal-title">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <polyline points="21 15 16 10 5 21"/>
-          </svg>
-          <span>Quadrants Composite Image</span>
+  <!-- Proof Sheet Modal -->
+  <div class="overlay-backdrop" id="compositeModal" role="dialog" aria-modal="true">
+    <div class="composite-dialog">
+      <header class="composite-dialog-header">
+        <div class="composite-dialog-title">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Proof Sheet Overview</span>
         </div>
-        <div class="composite-modal-actions">
-          <button class="btn btn-primary" id="downloadCompositeBtn">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download PNG
-          </button>
-          <button class="btn" id="copyCompositeBtn">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            Copy Image
-          </button>
+        <div class="composite-dialog-actions">
+          <button class="btn btn-hero" id="downloadCompositeBtn">Download PNG</button>
+          <button class="btn" id="copyCompositeBtn">Copy Image</button>
           <button class="btn" id="closeCompositeBtn">Close</button>
         </div>
-      </div>
-      <div class="composite-preview-scroll">
-        <img id="compositeResultImg" src="" alt="Generated Quadrants Image">
+      </header>
+      <div class="composite-canvas-scroll">
+        <img id="compositeResultImg" src="" alt="Generated Proof Sheet">
       </div>
     </div>
   </div>
 
-  <!-- Global Drag overlay -->
-  <div id="globalDropOverlay">Drop image into any square or tray!</div>
+  <div id="globalDropOverlay"><div class="drop-banner">Drop to ingest screenshot into ProofSheet</div></div>
 
   <script>
-    // ==========================================
-    // IndexedDB Storage Layer (Handles large screenshots safely)
-    // ==========================================
-    const DB_NAME = 'ScreenshotSorterDB';
-    const DB_VERSION = 1;
-    const STORE_ITEMS = 'screenshots';
-    const STORE_META = 'metadata';
+    // Storage Engine (IndexedDB with localStorage Fallback)
+    const DB_NAME = 'ScreenshotSorterDB', STORE_ITEMS = 'screenshots', STORE_META = 'metadata';
+    const dbPromise = new Promise(res => {
+      if (!window.indexedDB) return res(null);
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        [STORE_ITEMS, STORE_META].forEach(s => !db.objectStoreNames.contains(s) && db.createObjectStore(s, { keyPath: s === STORE_ITEMS ? 'id' : 'key' }));
+      };
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => res(null);
+    });
 
-    function openDB() {
-      return new Promise((resolve, reject) => {
-        if (!window.indexedDB) {
-          return resolve(null);
-        }
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains(STORE_ITEMS)) {
-            db.createObjectStore(STORE_ITEMS, { keyPath: 'id' });
-          }
-          if (!db.objectStoreNames.contains(STORE_META)) {
-            db.createObjectStore(STORE_META, { keyPath: 'key' });
-          }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => {
-          console.warn('IndexedDB failed to open, fallback to localStorage', request.error);
-          resolve(null);
-        };
+    async function idb(store, mode, op) {
+      const db = await dbPromise;
+      if (!db) return null;
+      return new Promise(res => {
+        try {
+          const tx = db.transaction(store, mode);
+          const req = op(tx.objectStore(store));
+          tx.oncomplete = () => res(req ? req.result : true);
+          tx.onerror = () => res(null);
+        } catch { res(null); }
       });
     }
 
     const Storage = {
-      dbPromise: openDB(),
-
-      async getAll() {
-        const db = await this.dbPromise;
-        if (!db) {
-          try {
-            return JSON.parse(localStorage.getItem('screenshot_items') || '[]');
-          } catch {
-            return [];
-          }
-        }
-        return new Promise((resolve) => {
-          try {
-            const tx = db.transaction(STORE_ITEMS, 'readonly');
-            const store = tx.objectStore(STORE_ITEMS);
-            const req = store.getAll();
-            req.onsuccess = () => resolve(req.result || []);
-            req.onerror = () => resolve([]);
-          } catch {
-            resolve([]);
-          }
-        });
+      getAll: () => idb(STORE_ITEMS, 'readonly', s => s.getAll()).then(r => r ?? JSON.parse(localStorage.getItem('screenshot_items') || '[]')),
+      save: item => idb(STORE_ITEMS, 'readwrite', s => s.put(item)).then(ok => { if (!ok) try { localStorage.setItem('screenshot_items', JSON.stringify(state.items)); } catch {} }),
+      delete: id => idb(STORE_ITEMS, 'readwrite', s => s.delete(id)).then(ok => { if (!ok) try { localStorage.setItem('screenshot_items', JSON.stringify(state.items)); } catch {} }),
+      clearAll: async () => {
+        localStorage.removeItem('screenshot_items');
+        localStorage.removeItem('screenshot_titles');
+        await idb(STORE_ITEMS, 'readwrite', s => s.clear());
+        await idb(STORE_META, 'readwrite', s => s.clear());
       },
-
-      async save(item) {
-        const db = await this.dbPromise;
-        if (!db) {
-          this._saveLocalStorage();
-          return;
-        }
-        return new Promise((resolve) => {
-          try {
-            const tx = db.transaction(STORE_ITEMS, 'readwrite');
-            const store = tx.objectStore(STORE_ITEMS);
-            store.put(item);
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = () => resolve(false);
-          } catch {
-            resolve(false);
-          }
-        });
+      saveTitles: titles => {
+        try { localStorage.setItem('screenshot_titles', JSON.stringify(titles)); } catch {}
+        idb(STORE_META, 'readwrite', s => s.put({ key: 'titles', val: titles }));
       },
-
-      async delete(id) {
-        const db = await this.dbPromise;
-        if (!db) {
-          this._saveLocalStorage();
-          return;
-        }
-        return new Promise((resolve) => {
-          try {
-            const tx = db.transaction(STORE_ITEMS, 'readwrite');
-            const store = tx.objectStore(STORE_ITEMS);
-            store.delete(id);
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = () => resolve(false);
-          } catch {
-            resolve(false);
-          }
-        });
-      },
-
-      async clearAll() {
-        try {
-          localStorage.removeItem('screenshot_items');
-          localStorage.removeItem('screenshot_titles');
-        } catch (e) {
-          console.error(e);
-        }
-
-        const db = await this.dbPromise;
-        if (!db) return;
-
-        return new Promise((resolve) => {
-          try {
-            const tx = db.transaction([STORE_ITEMS, STORE_META], 'readwrite');
-            tx.objectStore(STORE_ITEMS).clear();
-            tx.objectStore(STORE_META).clear();
-            tx.oncomplete = () => resolve(true);
-            tx.onerror = () => resolve(false);
-          } catch {
-            resolve(false);
-          }
-        });
-      },
-
-      async saveTitles(titles) {
-        try {
-          localStorage.setItem('screenshot_titles', JSON.stringify(titles));
-        } catch (e) {}
-
-        const db = await this.dbPromise;
-        if (!db) return;
-        try {
-          const tx = db.transaction(STORE_META, 'readwrite');
-          tx.objectStore(STORE_META).put({ key: 'titles', val: titles });
-        } catch (e) {}
-      },
-
-      async loadTitles() {
-        const db = await this.dbPromise;
-        if (db) {
-          const titles = await new Promise((resolve) => {
-            try {
-              const tx = db.transaction(STORE_META, 'readonly');
-              const req = tx.objectStore(STORE_META).get('titles');
-              req.onsuccess = () => resolve(req.result ? req.result.val : null);
-              req.onerror = () => resolve(null);
-            } catch {
-              resolve(null);
-            }
-          });
-          if (titles) return titles;
-        }
-        try {
-          return JSON.parse(localStorage.getItem('screenshot_titles') || 'null');
-        } catch {
-          return null;
-        }
-      },
-
-      _saveLocalStorage() {
-        try {
-          localStorage.setItem('screenshot_items', JSON.stringify(state.items));
-        } catch (e) {
-          console.warn('localStorage quota reached or unavailable:', e);
-        }
-      }
+      loadTitles: () => idb(STORE_META, 'readonly', s => s.get('titles')).then(r => r?.val ?? JSON.parse(localStorage.getItem('screenshot_titles') || 'null'))
     };
 
-    // ==========================================
-    // State management
-    // ==========================================
-    const state = {
-      items: [] // Array of { id, url, name, time, zone, createdAt }
+    // State & Selectors
+    const state = { items: [] };
+    let draggedItemId = null, activeMenu = null, compositeBlob = null, compositeUrl = null;
+
+    const $ = id => document.getElementById(id);
+    const qcfg = {
+      'square-1': { id: 'title-sq-1', code: '1', label: 'Priority Issues', color: '#38bdf8' },
+      'square-2': { id: 'title-sq-2', code: '2', label: 'Design References', color: '#f59e0b' },
+      'square-3': { id: 'title-sq-3', code: '3', label: 'Typography & UI Polish', color: '#10b981' },
+      'square-4': { id: 'title-sq-4', code: '4', label: 'Accepted & Archived', color: '#a855f7' }
     };
 
-    let draggedItemId = null;
-    let activeQuickMenu = null;
-    let latestCompositeBlob = null;
-    let latestCompositeUrl = null;
-
-    // DOM Elements
-    const fileInput = document.getElementById('fileInput');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const sampleBtn = document.getElementById('sampleBtn');
-    const clearAllBtn = document.getElementById('clearAllBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const createQuadrantImgBtn = document.getElementById('createQuadrantImgBtn');
-    const dropzoneBox = document.getElementById('dropzoneBox');
-    const imageModal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImg');
-    const modalCaption = document.getElementById('modalCaption');
-    const modalClose = document.getElementById('modalClose');
-    const compositeModal = document.getElementById('compositeModal');
-    const compositeResultImg = document.getElementById('compositeResultImg');
-    const downloadCompositeBtn = document.getElementById('downloadCompositeBtn');
-    const copyCompositeBtn = document.getElementById('copyCompositeBtn');
-    const closeCompositeBtn = document.getElementById('closeCompositeBtn');
-    const globalDropOverlay = document.getElementById('globalDropOverlay');
-    const storageStatus = document.getElementById('storageStatus');
-
-    function uid() {
-      return 'img_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+    function flashSync() {
+      const dot = $('statusDot'), txt = $('storageStatusText');
+      if (dot) dot.style.cssText = 'background:#38bdf8;box-shadow:0 0 8px #38bdf8';
+      if (txt) txt.textContent = 'Synced';
+      setTimeout(() => {
+        if (dot) dot.style.cssText = 'background:#10b981;box-shadow:0 0 6px #10b981';
+        if (txt) txt.textContent = 'Local Ready';
+      }, 1000);
     }
 
-    function showSaveIndicator() {
-      if (storageStatus) {
-        storageStatus.textContent = 'Saved';
-        storageStatus.style.borderColor = 'rgba(56, 189, 248, 0.5)';
-        setTimeout(() => {
-          if (storageStatus) {
-            storageStatus.textContent = 'Saved Locally';
-            storageStatus.style.borderColor = 'rgba(34, 197, 94, 0.3)';
-          }
-        }, 1200);
-      }
-    }
-
-    async function addScreenshot(dataUrl, name = 'Screenshot', targetZone = 'tray') {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const item = {
-        id: uid(),
-        url: dataUrl,
-        name: name,
-        time: timeStr,
-        zone: targetZone,
-        createdAt: Date.now()
-      };
+    async function addScreenshot(url, name = 'Screenshot', zone = 'tray') {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const item = { id: 'snip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), url, name, time, zone, createdAt: Date.now() };
       state.items.push(item);
       render();
       await Storage.save(item);
-      showSaveIndicator();
+      flashSync();
     }
 
-    function handleFiles(files, targetZone = 'tray') {
-      if (!files || files.length === 0) return;
-      Array.from(files).forEach(file => {
-        if (!file.type.startsWith('image/')) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          addScreenshot(e.target.result, file.name, targetZone);
-        };
-        reader.readAsDataURL(file);
+    function handleFiles(files, zone = 'tray') {
+      Array.from(files || []).forEach(f => {
+        if (!f.type.startsWith('image/')) return;
+        const r = new FileReader();
+        r.onload = e => addScreenshot(e.target.result, f.name, zone);
+        r.readAsDataURL(f);
       });
     }
 
-    // Clipboard Paste Support (Cmd+V / Ctrl+V)
-    window.addEventListener('paste', (e) => {
-      const clipboardData = e.clipboardData || window.clipboardData;
-      if (!clipboardData) return;
-      
-      const items = clipboardData.items;
-      let handled = false;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            addScreenshot(evt.target.result, `Pasted ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
-          };
-          reader.readAsDataURL(blob);
-          handled = true;
-        }
-      }
-      if (handled) e.preventDefault();
-    });
-
-    uploadBtn.addEventListener('click', () => fileInput.click());
-    dropzoneBox.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
-      handleFiles(e.target.files, 'tray');
-      fileInput.value = '';
-    });
-
-    // Clear All
-    clearAllBtn.addEventListener('click', async () => {
-      if (state.items.length === 0) return;
-      if (confirm('Clear all screenshots and saved storage?')) {
-        state.items = [];
-        render();
-        await Storage.clearAll();
-        showSaveIndicator();
-      }
-    });
-
-    // Save custom titles on edit
-    document.querySelectorAll('.square-title').forEach(el => {
-      el.addEventListener('blur', async () => {
-        const titles = {
-          sq1: document.getElementById('title-sq-1')?.textContent.trim(),
-          sq2: document.getElementById('title-sq-2')?.textContent.trim(),
-          sq3: document.getElementById('title-sq-3')?.textContent.trim(),
-          sq4: document.getElementById('title-sq-4')?.textContent.trim()
-        };
-        await Storage.saveTitles(titles);
-      });
-    });
-
-    // Export JSON metadata
-    exportBtn.addEventListener('click', () => {
-      if (state.items.length === 0) {
-        alert('No screenshots to export yet. Add some first!');
-        return;
-      }
-      const exportData = {
-        date: new Date().toISOString(),
-        titles: {
-          square1: document.getElementById('title-sq-1')?.textContent.trim(),
-          square2: document.getElementById('title-sq-2')?.textContent.trim(),
-          square3: document.getElementById('title-sq-3')?.textContent.trim(),
-          square4: document.getElementById('title-sq-4')?.textContent.trim(),
-        },
-        items: state.items.map(item => ({
-          name: item.name,
-          time: item.time,
-          zone: item.zone
-        }))
-      };
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `screenshot-quadrants-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    // Add sample screenshots
-    sampleBtn.addEventListener('click', () => {
-      const samples = [
-        { label: 'Login Screen UI', color: '#38bdf8', bg: '#0369a1' },
-        { label: 'Analytics Dashboard', color: '#a855f7', bg: '#7e22ce' },
-        { label: 'System Architecture', color: '#22c55e', bg: '#15803d' },
-        { label: 'Bug Report Modal', color: '#f59e0b', bg: '#b45309' }
-      ];
-
-      samples.forEach((s, idx) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 440;
-        canvas.height = 280;
-        const ctx = canvas.getContext('2d');
-
-        ctx.fillStyle = '#0b111e';
-        ctx.fillRect(0, 0, 440, 280);
-
-        // Header bar
-        ctx.fillStyle = '#172233';
-        ctx.fillRect(0, 0, 440, 36);
-
-        // Window buttons
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath(); ctx.arc(18, 18, 5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#eab308';
-        ctx.beginPath(); ctx.arc(36, 18, 5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#22c55e';
-        ctx.beginPath(); ctx.arc(54, 18, 5, 0, Math.PI*2); ctx.fill();
-
-        // Card mockup
-        ctx.fillStyle = s.bg;
-        if (ctx.roundRect) ctx.roundRect(40, 60, 360, 180, 10);
-        else ctx.fillRect(40, 60, 360, 180);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(s.label, 220, 140);
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = '13px -apple-system, sans-serif';
-        ctx.fillText('Sample ' + (idx + 1) + ' · 1920×1080 Screenshot', 220, 170);
-
-        addScreenshot(canvas.toDataURL('image/png'), `${s.label}.png`);
-      });
-    });
-
-    // ==========================================
-    // DOM-TO-IMAGE: Create Quadrants Composite Image
-    // ==========================================
-    function getQuadrantMeta(zoneId) {
-      const config = {
-        'square-1': { id: 'title-sq-1', fallback: 'Square 1: Priority / Top Left', color: '#38bdf8' },
-        'square-2': { id: 'title-sq-2', fallback: 'Square 2: Reviews / Top Right', color: '#a855f7' },
-        'square-3': { id: 'title-sq-3', fallback: 'Square 3: References / Bottom Left', color: '#22c55e' },
-        'square-4': { id: 'title-sq-4', fallback: 'Square 4: Archive / Bottom Right', color: '#f59e0b' }
-      };
-      const conf = config[zoneId] || { id: null, fallback: 'Quadrant', color: '#38bdf8' };
-      const el = conf.id ? document.getElementById(conf.id) : null;
-      return {
-        title: el ? el.textContent.trim() : conf.fallback,
-        color: conf.color
-      };
-    }
-
-    createQuadrantImgBtn.addEventListener('click', async () => {
-      // 1. Gather all screenshots located in quadrants (square-1, square-2, square-3, square-4)
-      const quadrantItems = state.items.filter(item => item.zone.startsWith('square-'));
-
-      if (quadrantItems.length === 0) {
-        alert('No screenshots found in any of the four squares!\nDrag or move some screenshots into Square 1, 2, 3, or 4 first.');
-        return;
-      }
-
-      // Check if domtoimage library is available
-      if (typeof domtoimage === 'undefined' && typeof window.domtoimage === 'undefined') {
-        alert('dom-to-image library is still loading or unavailable. Please wait a moment and try again.');
-        return;
-      }
-
-      const dti = window.domtoimage || domtoimage;
-
-      // Loading state on button
-      const origText = createQuadrantImgBtn.innerHTML;
-      createQuadrantImgBtn.disabled = true;
-      createQuadrantImgBtn.innerHTML = `
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
-          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-          <path d="M12 2a10 10 0 0 1 10 10"></path>
-        </svg>
-        Generating Image...
-      `;
-
-      try {
-        // Sort items by quadrant: square-1, square-2, square-3, square-4
-        const zoneOrder = ['square-1', 'square-2', 'square-3', 'square-4'];
-        quadrantItems.sort((a, b) => zoneOrder.indexOf(a.zone) - zoneOrder.indexOf(b.zone));
-
-        // Create the offscreen DOM container to render
-        // Note: Keep within viewport coordinates with z-index: -9999 and pointer-events: none
-        // so SVG foreignObject rasterizes all inner text, styling, and images accurately.
-        const wrapper = document.createElement('div');
-        wrapper.id = 'compositeExportContainer';
-        
-        // Multi-column or single column layout
-        const isMulti = quadrantItems.length > 1;
-        const containerWidth = isMulti ? 1440 : 880;
-
-        wrapper.style.position = 'fixed';
-        wrapper.style.left = '0';
-        wrapper.style.top = '0';
-        wrapper.style.zIndex = '-9999';
-        wrapper.style.pointerEvents = 'none';
-        wrapper.style.width = `${containerWidth}px`;
-        wrapper.style.backgroundColor = '#090d16';
-        wrapper.style.color = '#f8fafc';
-        wrapper.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-        wrapper.style.padding = '36px';
-        wrapper.style.boxSizing = 'border-box';
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'column';
-        wrapper.style.gap = '28px';
-
-        // Header inside composite image
-        const headerDiv = document.createElement('div');
-        headerDiv.style.display = 'flex';
-        headerDiv.style.justifyContent = 'space-between';
-        headerDiv.style.alignItems = 'center';
-        headerDiv.style.borderBottom = '2px solid #1e2c40';
-        headerDiv.style.paddingBottom = '18px';
-
-        const titleDiv = document.createElement('div');
-        titleDiv.style.display = 'flex';
-        titleDiv.style.alignItems = 'center';
-        titleDiv.style.gap = '12px';
-        titleDiv.innerHTML = `
-          <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #38bdf8, #818cf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem; color: #090d16;">⊞</div>
-          <div>
-            <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0; color: #f8fafc; letter-spacing: -0.02em;">Screenshot Quadrants Overview</h2>
-            <p style="font-size: 0.85rem; color: #94a3b8; margin: 2px 0 0 0;">Generated on ${new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at ${new Date().toLocaleTimeString()}</p>
-          </div>
-        `;
-
-        const badgeDiv = document.createElement('div');
-        badgeDiv.style.background = '#162234';
-        badgeDiv.style.border = '1px solid #283a54';
-        badgeDiv.style.borderRadius = '999px';
-        badgeDiv.style.padding = '6px 14px';
-        badgeDiv.style.fontSize = '0.85rem';
-        badgeDiv.style.color = '#94a3b8';
-        badgeDiv.style.fontWeight = '600';
-        badgeDiv.textContent = `${quadrantItems.length} ${quadrantItems.length === 1 ? 'Screenshot' : 'Screenshots'} in Quadrants`;
-
-        headerDiv.appendChild(titleDiv);
-        headerDiv.appendChild(badgeDiv);
-        wrapper.appendChild(headerDiv);
-
-        // Grid for the quadrant cards
-        const gridDiv = document.createElement('div');
-        gridDiv.style.display = 'grid';
-        gridDiv.style.gridTemplateColumns = isMulti ? '1fr 1fr' : '1fr';
-        gridDiv.style.gap = '24px';
-
-        // Populate cards
-        quadrantItems.forEach(item => {
-          const meta = getQuadrantMeta(item.zone);
-
-          const card = document.createElement('div');
-          card.style.background = '#111a28';
-          card.style.border = '1px solid #24354e';
-          card.style.borderRadius = '14px';
-          card.style.padding = '22px';
-          card.style.display = 'flex';
-          card.style.flexDirection = 'column';
-          card.style.gap = '14px';
-          card.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
-
-          // The Quadrant Title Header directly above the image
-          const cardHeader = document.createElement('div');
-          cardHeader.style.display = 'flex';
-          cardHeader.style.justifyContent = 'space-between';
-          cardHeader.style.alignItems = 'center';
-          cardHeader.style.borderBottom = '1px solid #1a273b';
-          cardHeader.style.paddingBottom = '10px';
-
-          const titleWrap = document.createElement('div');
-          titleWrap.style.display = 'flex';
-          titleWrap.style.alignItems = 'center';
-          titleWrap.style.gap = '10px';
-          titleWrap.innerHTML = `
-            <span style="display:inline-block; width: 14px; height: 14px; border-radius: 50%; background-color: ${meta.color}; box-shadow: 0 0 10px ${meta.color};"></span>
-            <span style="font-size: 1.15rem; font-weight: 700; color: #ffffff; letter-spacing: -0.01em;">${meta.title}</span>
-          `;
-
-          const metaWrap = document.createElement('div');
-          metaWrap.style.fontSize = '0.8rem';
-          metaWrap.style.color = '#94a3b8';
-          metaWrap.style.background = 'rgba(255, 255, 255, 0.05)';
-          metaWrap.style.padding = '3px 8px';
-          metaWrap.style.borderRadius = '6px';
-          metaWrap.textContent = item.name;
-
-          cardHeader.appendChild(titleWrap);
-          cardHeader.appendChild(metaWrap);
-          card.appendChild(cardHeader);
-
-          // The image rendered a bit larger (e.g. 640px+ wide container, high resolution, dark frame)
-          const imgContainer = document.createElement('div');
-          imgContainer.style.background = '#060a12';
-          imgContainer.style.border = '1px solid #1b283d';
-          imgContainer.style.borderRadius = '10px';
-          imgContainer.style.overflow = 'hidden';
-          imgContainer.style.display = 'flex';
-          imgContainer.style.alignItems = 'center';
-          imgContainer.style.justifyContent = 'center';
-          imgContainer.style.padding = '12px';
-          imgContainer.style.minHeight = '340px';
-          imgContainer.style.maxHeight = '520px';
-
-          const img = document.createElement('img');
-          img.src = item.url;
-          img.style.maxWidth = '100%';
-          img.style.maxHeight = '490px';
-          img.style.width = 'auto';
-          img.style.height = 'auto';
-          img.style.objectFit = 'contain';
-          img.style.borderRadius = '6px';
-          img.style.display = 'block';
-
-          imgContainer.appendChild(img);
-          card.appendChild(imgContainer);
-
-          gridDiv.appendChild(card);
-        });
-
-        wrapper.appendChild(gridDiv);
-        document.body.appendChild(wrapper);
-
-        // Wait for all images inside wrapper to be loaded
-        const imgElements = Array.from(wrapper.querySelectorAll('img'));
-        await Promise.all(imgElements.map(img => {
-          if (img.complete) return Promise.resolve();
-          return new Promise(res => {
-            img.onload = res;
-            img.onerror = res;
-          });
-        }));
-
-        // Small delay to ensure styles and fonts compute
-        await new Promise(r => setTimeout(r, 80));
-
-        // Use dom-to-image to render the node to a PNG data URL
-        const dataUrl = await dti.toPng(wrapper, {
-          bgcolor: '#090d16',
-          quality: 1.0
-        });
-
-        // Clean up temporary DOM node
-        document.body.removeChild(wrapper);
-
-        // Store latest composite data
-        latestCompositeUrl = dataUrl;
-
-        // Convert dataUrl to blob for copying/downloading
-        const res = await fetch(dataUrl);
-        latestCompositeBlob = await res.blob();
-
-        // Update modal and display the preview first (without auto-downloading)
-        compositeResultImg.src = dataUrl;
-        compositeModal.classList.add('active');
-
-      } catch (err) {
-        console.error('Failed to generate composite image with dom-to-image:', err);
-        alert('Failed to generate image: ' + (err.message || err));
-        const existingNode = document.getElementById('compositeExportContainer');
-        if (existingNode && existingNode.parentNode) {
-          existingNode.parentNode.removeChild(existingNode);
-        }
-      } finally {
-        createQuadrantImgBtn.disabled = false;
-        createQuadrantImgBtn.innerHTML = origText;
-      }
-    });
-
-    function downloadFile(url, filename) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    downloadCompositeBtn.addEventListener('click', () => {
-      if (latestCompositeUrl) {
-        downloadFile(latestCompositeUrl, `quadrant-screenshots-${Date.now()}.png`);
-      }
-    });
-
-    copyCompositeBtn.addEventListener('click', async () => {
-      if (!latestCompositeBlob) return;
-      try {
-        if (navigator.clipboard && window.ClipboardItem) {
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': latestCompositeBlob })
-          ]);
-          copyCompositeBtn.textContent = 'Copied!';
-          setTimeout(() => {
-            copyCompositeBtn.innerHTML = `
-              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copy Image
-            `;
-          }, 1500);
-        } else {
-          alert('Clipboard image copy not supported in this browser. Please use Download PNG.');
-        }
-      } catch (e) {
-        console.error('Failed to copy image:', e);
-        alert('Could not copy image to clipboard.');
-      }
-    });
-
-    closeCompositeBtn.addEventListener('click', () => {
-      compositeModal.classList.remove('active');
-    });
-
-    compositeModal.addEventListener('click', (e) => {
-      if (e.target === compositeModal) {
-        compositeModal.classList.remove('active');
-      }
-    });
-
-    // Close any open quick move menu when clicking elsewhere
-    document.addEventListener('click', (e) => {
-      if (activeQuickMenu && !activeQuickMenu.contains(e.target)) {
-        activeQuickMenu.classList.remove('show');
-        activeQuickMenu = null;
-      }
-    });
-
-    // Drag-and-drop file upload from OS
-    let dragCounter = 0;
-    window.addEventListener('dragenter', (e) => {
-      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
-        dragCounter++;
-        globalDropOverlay.style.display = 'flex';
-      }
-    });
-
-    window.addEventListener('dragleave', (e) => {
-      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
-        dragCounter--;
-        if (dragCounter <= 0) {
-          dragCounter = 0;
-          globalDropOverlay.style.display = 'none';
-        }
-      }
-    });
-
-    window.addEventListener('dragover', (e) => {
-      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
-        e.preventDefault();
-      }
-    });
-
-    window.addEventListener('drop', (e) => {
-      if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
-        e.preventDefault();
-        dragCounter = 0;
-        globalDropOverlay.style.display = 'none';
-
-        const targetSquare = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-zone-id]');
-        const zoneId = targetSquare?.dataset?.zoneId || 'tray';
-        handleFiles(e.dataTransfer.files, zoneId);
-      }
-    });
-
-    // Render cards into zones
-    function render() {
-      const zones = {
-        'tray': document.getElementById('trayList'),
-        'square-1': document.querySelector('.square-1 .square-content'),
-        'square-2': document.querySelector('.square-2 .square-content'),
-        'square-3': document.querySelector('.square-3 .square-content'),
-        'square-4': document.querySelector('.square-4 .square-content')
-      };
-
-      Object.values(zones).forEach(el => {
-        if (el) el.innerHTML = '';
-      });
-
-      state.items.forEach(item => {
-        const container = zones[item.zone] || zones['tray'];
-        const card = createCardElement(item);
-        container.appendChild(card);
-      });
-
-      // Update counters
-      document.getElementById('trayCount').textContent = `${state.items.filter(i => i.zone === 'tray').length} items`;
-      for (let i = 1; i <= 4; i++) {
-        const count = state.items.filter(item => item.zone === `square-${i}`).length;
-        const countEl = document.querySelector(`.square-${i} .item-count`);
-        if (countEl) countEl.textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
-      }
-    }
-
-    async function moveItemTo(itemId, targetZone) {
-      const item = state.items.find(i => i.id === itemId);
+    async function moveItem(id, zone) {
+      const item = state.items.find(i => i.id === id);
       if (item) {
-        item.zone = targetZone;
+        item.zone = zone;
         render();
         await Storage.save(item);
-        showSaveIndicator();
+        flashSync();
       }
     }
 
-    function createCardElement(item) {
-      const card = document.createElement('div');
-      card.className = 'screenshot-card';
-      card.draggable = true;
-      card.id = item.id;
-      card.dataset.id = item.id;
+    // Render Workbench
+    function render() {
+      const zones = {
+        'tray': $('trayList'),
+        'square-1': document.querySelector('.cell-q1 .cell-body'),
+        'square-2': document.querySelector('.cell-q2 .cell-body'),
+        'square-3': document.querySelector('.cell-q3 .cell-body'),
+        'square-4': document.querySelector('.cell-q4 .cell-body')
+      };
+      Object.values(zones).forEach(el => el && (el.innerHTML = ''));
 
-      card.innerHTML = `
-        <div class="img-wrapper">
-          <img src="${item.url}" alt="${item.name}">
-          <div class="card-actions">
-            <div class="quick-move-wrap">
-              <button class="icon-btn move-btn" title="Move to square...">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
-              <div class="quick-move-menu">
-                <button class="quick-move-item" data-move="square-1">
-                  <span class="dot" style="background:var(--sq1)"></span>Square 1
-                </button>
-                <button class="quick-move-item" data-move="square-2">
-                  <span class="dot" style="background:var(--sq2)"></span>Square 2
-                </button>
-                <button class="quick-move-item" data-move="square-3">
-                  <span class="dot" style="background:var(--sq3)"></span>Square 3
-                </button>
-                <button class="quick-move-item" data-move="square-4">
-                  <span class="dot" style="background:var(--sq4)"></span>Square 4
-                </button>
-                <button class="quick-move-item" data-move="tray">
-                  <span class="dot" style="background:#64748b"></span>Unassigned
-                </button>
+      state.items.forEach(item => {
+        const parent = zones[item.zone] || zones.tray;
+        const card = document.createElement('div');
+        card.className = 'screenshot-card';
+        card.draggable = true;
+        card.dataset.id = item.id;
+        card.innerHTML = `
+          <div class="img-frame">
+            <img src="${item.url}" alt="${item.name}">
+            <div class="card-actions-dock">
+              <div class="quick-dispatch">
+                <button class="tool-btn dispatch-btn" title="Dispatch"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+                <div class="dispatch-menu">
+                  <button class="dispatch-item" data-move="square-1"><span class="dispatch-dot" style="background:#38bdf8"></span>01 · NW</button>
+                  <button class="dispatch-item" data-move="square-2"><span class="dispatch-dot" style="background:#f59e0b"></span>02 · NE</button>
+                  <button class="dispatch-item" data-move="square-3"><span class="dispatch-dot" style="background:#10b981"></span>03 · SW</button>
+                  <button class="dispatch-item" data-move="square-4"><span class="dispatch-dot" style="background:#a855f7"></span>04 · SE</button>
+                  <button class="dispatch-item" data-move="tray"><span class="dispatch-dot" style="background:#64748b"></span>Tray</button>
+                </div>
               </div>
+              <button class="tool-btn zoom-btn" title="Zoom"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+              <button class="tool-btn delete-btn" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
-            <button class="icon-btn zoom-btn" title="View full size">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                <line x1="11" y1="8" x2="11" y2="14"></line>
-                <line x1="8" y1="11" x2="14" y2="11"></line>
-              </svg>
-            </button>
-            <button class="icon-btn delete-btn" title="Delete screenshot">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
           </div>
-        </div>
-        <div class="card-meta">
-          <span class="card-title-text" title="${item.name}">${item.name}</span>
-          <span>${item.time}</span>
-        </div>
-      `;
-
-      // Quick move toggle
-      const moveBtn = card.querySelector('.move-btn');
-      const moveMenu = card.querySelector('.quick-move-menu');
-      moveBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (activeQuickMenu && activeQuickMenu !== moveMenu) {
-          activeQuickMenu.classList.remove('show');
-        }
-        moveMenu.classList.toggle('show');
-        activeQuickMenu = moveMenu.classList.contains('show') ? moveMenu : null;
-      });
-
-      // Quick move item click
-      card.querySelectorAll('.quick-move-item').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const targetZone = btn.dataset.move;
-          moveMenu.classList.remove('show');
-          activeQuickMenu = null;
-          moveItemTo(item.id, targetZone);
+          <div class="card-footer"><span class="card-filename" title="${item.name}">${item.name}</span><span class="card-time">${item.time}</span></div>
+        `;
+        card.addEventListener('dragstart', e => {
+          draggedItemId = item.id;
+          card.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', item.id);
         });
+        card.addEventListener('dragend', () => {
+          draggedItemId = null;
+          card.classList.remove('dragging');
+          document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('drag-over'));
+        });
+        parent.appendChild(card);
       });
 
-      // Zoom preview handler
-      card.querySelector('.zoom-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openModal(item.url, item.name);
+      const tCount = state.items.filter(i => i.zone === 'tray').length;
+      $('trayCount').textContent = `${tCount} ${tCount === 1 ? 'item' : 'items'}`;
+      [1, 2, 3, 4].forEach(n => {
+        const count = state.items.filter(i => i.zone === `square-${n}`).length;
+        $(`count-sq-${n}`).textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
       });
+    }
 
-      // Double-click card to zoom
-      card.addEventListener('dblclick', () => {
-        openModal(item.url, item.name);
-      });
+    // Unified Delegated Event Handlers
+    document.addEventListener('click', async e => {
+      const card = e.target.closest('.screenshot-card');
+      const item = card ? state.items.find(i => i.id === card.dataset.id) : null;
 
-      // Delete handler
-      card.querySelector('.delete-btn').addEventListener('click', async (e) => {
-        e.stopPropagation();
+      if (e.target.closest('.dispatch-btn')) {
+        const menu = card.querySelector('.dispatch-menu');
+        activeMenu && activeMenu !== menu && activeMenu.classList.remove('show');
+        menu.classList.toggle('show');
+        activeMenu = menu.classList.contains('show') ? menu : null;
+        return;
+      }
+      if (e.target.closest('.dispatch-item')) {
+        const targetZone = e.target.closest('.dispatch-item').dataset.move;
+        activeMenu?.classList.remove('show');
+        activeMenu = null;
+        return moveItem(item.id, targetZone);
+      }
+      if (e.target.closest('.zoom-btn')) {
+        return openLightbox(item.url, item.name);
+      }
+      if (e.target.closest('.delete-btn')) {
         state.items = state.items.filter(i => i.id !== item.id);
         render();
-        await Storage.delete(item.id);
-      });
-
-      // Drag events for screenshot card
-      card.addEventListener('dragstart', (e) => {
-        draggedItemId = item.id;
-        card.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', item.id);
-        e.dataTransfer.effectAllowed = 'move';
-      });
-
-      card.addEventListener('dragend', () => {
-        draggedItemId = null;
-        card.classList.remove('dragging');
-        document.querySelectorAll('.square-box, .drop-target').forEach(el => {
-          el.classList.remove('drag-over');
-        });
-      });
-
-      return card;
-    }
-
-    // Drop zones setup (4 squares and tray)
-    const dropTargets = document.querySelectorAll('.drop-target');
-    dropTargets.forEach(target => {
-      target.addEventListener('dragover', (e) => {
-        if (!draggedItemId) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        const box = target.closest('.square-box') || target;
-        box.classList.add('drag-over');
-      });
-
-      target.addEventListener('dragleave', (e) => {
-        const box = target.closest('.square-box') || target;
-        if (!box.contains(e.relatedTarget)) {
-          box.classList.remove('drag-over');
-        }
-      });
-
-      target.addEventListener('drop', (e) => {
-        if (!draggedItemId) return;
-        e.preventDefault();
-        const box = target.closest('.square-box') || target;
-        box.classList.remove('drag-over');
-
-        const zoneId = target.dataset.zoneId || target.closest('[data-zone-id]')?.dataset.zoneId;
-        if (zoneId) {
-          moveItemTo(draggedItemId, zoneId);
-        }
-      });
-    });
-
-    // Modal controls
-    function openModal(src, caption) {
-      modalImg.src = src;
-      modalCaption.textContent = caption;
-      imageModal.classList.add('active');
-    }
-
-    function closeModal() {
-      imageModal.classList.remove('active');
-      modalImg.src = '';
-    }
-
-    modalClose.addEventListener('click', closeModal);
-    imageModal.addEventListener('click', (e) => {
-      if (e.target === imageModal) closeModal();
-    });
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeModal();
-        compositeModal.classList.remove('active');
+        return Storage.delete(item.id);
+      }
+      if (activeMenu && !activeMenu.contains(e.target)) {
+        activeMenu.classList.remove('show');
+        activeMenu = null;
       }
     });
 
-    // ==========================================
-    // Initial load from storage on startup / refresh
-    // ==========================================
-    async function init() {
-      // 1. Restore saved titles if any
+    document.addEventListener('dblclick', e => {
+      const card = e.target.closest('.screenshot-card');
+      const item = card ? state.items.find(i => i.id === card.dataset.id) : null;
+      if (item) openLightbox(item.url, item.name);
+    });
+
+    // Native Paste Listener
+    window.addEventListener('paste', e => {
+      const items = (e.clipboardData || window.clipboardData)?.items || [];
+      for (const it of items) {
+        if (it.type.includes('image')) {
+          const reader = new FileReader();
+          reader.onload = evt => addScreenshot(evt.target.result, `Pasted · ${new Date().toLocaleTimeString()}`);
+          reader.readAsDataURL(it.getAsFile());
+          e.preventDefault();
+        }
+      }
+    });
+
+    // Drag and Drop (Internal Cards + OS Files)
+    const getZone = el => el?.closest?.('[data-zone-id]')?.dataset.zoneId;
+    const hasFiles = e => Array.from(e.dataTransfer?.types || []).includes('Files');
+    let dragCounter = 0;
+
+    window.addEventListener('dragenter', e => {
+      if (hasFiles(e) && ++dragCounter === 1) $('globalDropOverlay').style.display = 'flex';
+    });
+    window.addEventListener('dragleave', e => {
+      if (hasFiles(e) && --dragCounter <= 0) { dragCounter = 0; $('globalDropOverlay').style.display = 'none'; }
+    });
+    window.addEventListener('dragover', e => {
+      if (!draggedItemId && !hasFiles(e)) return;
+      e.preventDefault();
+      const zone = getZone(e.target);
+      document.querySelectorAll('.matrix-cell, .dock-panel').forEach(c => c.classList.toggle('drag-over', c.dataset.zoneId === zone));
+    });
+    window.addEventListener('drop', e => {
+      const zone = getZone(e.target) || 'tray';
+      dragCounter = 0;
+      $('globalDropOverlay').style.display = 'none';
+      document.querySelectorAll('.matrix-cell, .dock-panel').forEach(c => c.classList.remove('drag-over'));
+      if (e.dataTransfer.files?.length) {
+        e.preventDefault();
+        handleFiles(e.dataTransfer.files, zone);
+      } else if (draggedItemId) {
+        e.preventDefault();
+        moveItem(draggedItemId, zone);
+      }
+    });
+
+    // Controls & Modals Wiring
+    $('uploadBtn').onclick = () => $('fileInput').click();
+    $('dropzoneBox').onclick = () => $('fileInput').click();
+    $('dropzoneBox').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); } };
+    $('fileInput').onchange = e => { handleFiles(e.target.files); e.target.value = ''; };
+
+    $('clearAllBtn').onclick = async () => {
+      if (!state.items.length || !confirm('Clear all screenshots and persistent browser storage?')) return;
+      state.items = [];
+      render();
+      await Storage.clearAll();
+      flashSync();
+    };
+
+    $('exportBtn').onclick = () => {
+      if (!state.items.length) return alert('No screenshots to export yet.');
+      const data = {
+        generatedAt: new Date().toISOString(),
+        categories: { q1: $('title-sq-1')?.textContent.trim(), q2: $('title-sq-2')?.textContent.trim(), q3: $('title-sq-3')?.textContent.trim(), q4: $('title-sq-4')?.textContent.trim() },
+        items: state.items
+      };
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      a.download = `proofsheet-${Date.now()}.json`;
+      a.click();
+    };
+
+    document.querySelectorAll('.editable-label').forEach(el => {
+      el.onblur = () => Storage.saveTitles({ sq1: $('title-sq-1').textContent.trim(), sq2: $('title-sq-2').textContent.trim(), sq3: $('title-sq-3').textContent.trim(), sq4: $('title-sq-4').textContent.trim() });
+      el.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } };
+    });
+
+    function openLightbox(src, caption) {
+      $('modalImg').src = src;
+      $('modalCaption').textContent = caption;
+      $('imageModal').classList.add('active');
+    }
+    const closeModals = () => { $('imageModal').classList.remove('active'); $('compositeModal').classList.remove('active'); };
+    $('modalClose').onclick = closeModals;
+    $('closeCompositeBtn').onclick = closeModals;
+    window.addEventListener('keydown', e => e.key === 'Escape' && closeModals());
+
+    // Generate Architectural Samples via Canvas
+    $('sampleBtn').onclick = () => {
+      const samples = [
+        { label: 'Mobile Nav Friction', zone: 'square-1', accent: '#38bdf8', sub: 'Primary checkout flow drop-off at navigation breakpoint', badge: 'BUG · CRITICAL' },
+        { label: 'Archival Grid Reference', zone: 'square-2', accent: '#f59e0b', sub: 'Swiss rationalist 12-column modular contact system', badge: 'BENCHMARK' },
+        { label: 'Type Contrast Audit', zone: 'square-3', accent: '#10b981', sub: 'Body copy line length exceeded 85ch on ultrawide viewports', badge: 'POLISH' },
+        { label: 'Design System Tokens v4', zone: 'square-4', accent: '#a855f7', sub: 'Harmonized chromatic values and elevation tokens', badge: 'DOCUMENTED' }
+      ];
+      samples.forEach(s => {
+        const c = document.createElement('canvas');
+        c.width = 540; c.height = 360;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#0e141f'; ctx.fillRect(0, 0, 540, 360);
+        ctx.strokeStyle = '#1a2333'; ctx.lineWidth = 1;
+        for (let x = 30; x < 540; x += 30) { ctx.strokeRect(x, 0, 0.1, 360); }
+        for (let y = 30; y < 360; y += 30) { ctx.strokeRect(0, y, 540, 0.1); }
+        ctx.fillStyle = '#161f2e'; ctx.fillRect(0, 0, 540, 44);
+        ['#ef4444', '#f59e0b', '#10b981'].forEach((col, i) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(22 + i * 16, 22, 5, 0, Math.PI * 2); ctx.fill(); });
+        ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px monospace'; ctx.fillText('AUDIT_SPEC_2026.TSX', 380, 26);
+        ctx.fillStyle = '#131b28'; ctx.strokeStyle = '#25344c'; ctx.fillRect(40, 75, 460, 240); ctx.strokeRect(40, 75, 460, 240);
+        ctx.fillStyle = s.accent; ctx.fillRect(40, 75, 6, 240);
+        ctx.fillStyle = '#1e2a3c'; ctx.fillRect(70, 105, 110, 24);
+        ctx.fillStyle = s.accent; ctx.font = 'bold 11px monospace'; ctx.fillText(s.badge, 80, 121);
+        ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 22px sans-serif'; ctx.fillText(s.label, 70, 170);
+        ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.fillText(s.sub, 70, 205);
+        ctx.fillStyle = '#223046'; ctx.fillRect(70, 245, 400, 36);
+        ctx.fillStyle = '#cbd5e1'; ctx.font = '500 12px monospace'; ctx.fillText('STATUS: PROCESSED · RESOLUTION: 1920×1080', 85, 268);
+        addScreenshot(c.toDataURL('image/png'), `${s.label}.png`, s.zone);
+      });
+    };
+
+    // Composite Proof Sheet Generator (dom-to-image)
+    $('createQuadrantImgBtn').onclick = async () => {
+      const qItems = state.items.filter(i => i.zone.startsWith('square-'));
+      if (!qItems.length) return alert('No screenshots found in Quadrants 01–04. Drag screenshots into quadrants first.');
+      const dti = window.domtoimage || domtoimage;
+      if (!dti) return alert('Rendering library initializing...');
+
+      const btn = $('createQuadrantImgBtn');
+      const prevHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="spin"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Synthesizing...`;
+
+      try {
+        const zones = ['square-1', 'square-2', 'square-3', 'square-4'];
+        qItems.sort((a, b) => zones.indexOf(a.zone) - zones.indexOf(b.zone));
+        const isMulti = qItems.length > 1;
+
+        const stage = document.createElement('div');
+        stage.style.cssText = `position:fixed;left:0;top:0;z-index:-9999;pointer-events:none;width:${isMulti ? 1480 : 880}px;background:#0b0f17;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:40px;display:flex;flex-direction:column;gap:28px;`;
+        stage.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1e293b;padding-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:42px;height:42px;background:#121824;border:1px solid #27354d;border-radius:8px;display:grid;grid-template:1fr 1fr/1fr 1fr;padding:7px;gap:3px;">
+                <div style="background:#38bdf8;border-radius:2px;"></div><div style="background:#f59e0b;border-radius:2px;"></div>
+                <div style="background:#10b981;border-radius:2px;"></div><div style="background:#a855f7;border-radius:2px;"></div>
+              </div>
+              <div>
+                <h2 style="font-size:1.6rem;font-weight:800;margin:0;color:#f8fafc;letter-spacing:-0.02em;">ProofSheet · Visual Quadrant Synthesis</h2>
+                <p style="font-size:0.82rem;color:#94a3b8;font-family:monospace;margin:3px 0 0;">EXPORTED ${new Date().toLocaleDateString().toUpperCase()} · ${new Date().toLocaleTimeString()}</p>
+              </div>
+            </div>
+            <div style="background:#121824;border:1px solid #27354d;border-radius:6px;padding:8px 16px;font-size:0.85rem;font-family:monospace;color:#cbd5e1;font-weight:600;">COUNT: ${qItems.length} ARTIFACTS</div>
+          </div>
+          <div style="display:grid;grid-template-columns:${isMulti ? '1fr 1fr' : '1fr'};gap:24px;">
+            ${qItems.map(item => {
+              const cfg = qcfg[item.zone] || { code: 'QUAD', color: '#3b82f6', id: '' };
+              const title = (cfg.id && $(cfg.id)?.textContent.trim()) || cfg.label;
+              return `
+                <div style="background:#121824;border:1px solid #27354d;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 6px 20px rgba(0,0,0,.5);">
+                  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <span style="font-family:monospace;font-size:0.75rem;font-weight:700;background:${cfg.color}22;color:${cfg.color};padding:3px 6px;border-radius:4px;">${cfg.code}</span>
+                      <span style="font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:-0.015em;">${title}</span>
+                    </div>
+                    <span style="font-size:0.78rem;font-family:monospace;color:#94a3b8;background:#0b0f17;padding:3px 8px;border-radius:4px;border:1px solid #1e293b;">${item.name}</span>
+                  </div>
+                  <div style="background:#080c12;border:1px solid #1e293b;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:12px;min-height:340px;max-height:520px;overflow:hidden;">
+                    <img src="${item.url}" style="max-width:100%;max-height:490px;object-fit:contain;border-radius:4px;display:block;">
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        document.body.appendChild(stage);
+
+        await Promise.all(Array.from(stage.querySelectorAll('img')).map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })));
+        await new Promise(r => setTimeout(r, 60));
+
+        const dataUrl = await dti.toPng(stage, { bgcolor: '#0b0f17', quality: 1.0 });
+        document.body.removeChild(stage);
+
+        compositeUrl = dataUrl;
+        const res = await fetch(dataUrl);
+        compositeBlob = await res.blob();
+        $('compositeResultImg').src = dataUrl;
+        $('compositeModal').classList.add('active');
+      } catch (err) {
+        console.error('Synthesis failed:', err);
+        alert('Failed to generate proof sheet: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = prevHtml;
+      }
+    };
+
+    $('downloadCompositeBtn').onclick = () => {
+      if (!compositeUrl) return;
+      const a = document.createElement('a');
+      a.href = compositeUrl;
+      a.download = `proofsheet-${Date.now()}.png`;
+      a.click();
+    };
+
+    $('copyCompositeBtn').onclick = async () => {
+      if (!compositeBlob || !navigator.clipboard?.write) return alert('Clipboard copy not supported. Please use Download PNG.');
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': compositeBlob })]);
+        $('copyCompositeBtn').textContent = 'Copied to Clipboard';
+        setTimeout(() => { $('copyCompositeBtn').textContent = 'Copy Image'; }, 1500);
+      } catch {
+        alert('Could not copy image to clipboard.');
+      }
+    };
+
+    // Initialization
+    (async function init() {
       const titles = await Storage.loadTitles();
       if (titles) {
-        if (titles.sq1 && document.getElementById('title-sq-1')) document.getElementById('title-sq-1').textContent = titles.sq1;
-        if (titles.sq2 && document.getElementById('title-sq-2')) document.getElementById('title-sq-2').textContent = titles.sq2;
-        if (titles.sq3 && document.getElementById('title-sq-3')) document.getElementById('title-sq-3').textContent = titles.sq3;
-        if (titles.sq4 && document.getElementById('title-sq-4')) document.getElementById('title-sq-4').textContent = titles.sq4;
+        [1, 2, 3, 4].forEach(n => titles[`sq${n}`] && ($(`title-sq-${n}`).textContent = titles[`sq${n}`]));
       }
-
-      // 2. Restore saved screenshot items
-      const savedItems = await Storage.getAll();
-      if (savedItems && savedItems.length > 0) {
-        state.items = savedItems;
-      }
+      state.items = await Storage.getAll();
       render();
-    }
-
-    init();
+    })();
   </script>
 </body>
 </html>
