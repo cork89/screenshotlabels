@@ -1,7 +1,7 @@
 import "./style.css";
 import "./proof-sheet";
 import { domToPng } from "modern-screenshot";
-import type { ProofItem, QuadrantConfig } from "./proof-sheet";
+import type { ProofItem, ProofSheetLayout, QuadrantConfig } from "./proof-sheet";
 
 export interface ScreenshotItem extends ProofItem {
   createdAt: number;
@@ -119,12 +119,10 @@ function flashSync() {
 }
 
 async function addScreenshot(url: string, name = "Screenshot", zone = "tray") {
-  const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const item: ScreenshotItem = {
     id: "snip_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
     url,
     name,
-    time,
     zone,
     createdAt: Date.now(),
   };
@@ -183,7 +181,7 @@ function render() {
           <button class="tool-btn delete-btn" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
       </div>
-      <div class="card-footer"><span class="card-filename" title="${item.name}">${item.name}</span><span class="card-time">${item.time}</span></div>
+      <div class="card-footer"><span class="card-filename" title="${item.name}">${item.name}</span></div>
     `;
     card.addEventListener("dragstart", (e) => {
       draggedItemId = item.id;
@@ -507,6 +505,83 @@ if (sampleBtn) {
 }
 
 // Composite Proof Sheet Generator (modern-screenshot via Shadow DOM <proof-sheet> Web Component)
+let currentLayout: ProofSheetLayout =
+  (localStorage.getItem("proofsheet_layout") as ProofSheetLayout) || "stack";
+
+function updateLayoutSegmentUI(layout: ProofSheetLayout) {
+  document.querySelectorAll(".segment-btn").forEach((btn) => {
+    const el = btn as HTMLButtonElement;
+    if (el.dataset.layout === layout) {
+      el.classList.add("active");
+    } else {
+      el.classList.remove("active");
+    }
+  });
+}
+
+updateLayoutSegmentUI(currentLayout);
+
+async function generateComposite(layout: ProofSheetLayout = currentLayout) {
+  const qItems = state.items.filter((i) => i.zone.startsWith("square-"));
+  if (!qItems.length) return null;
+
+  const zones = ["square-1", "square-2", "square-3", "square-4"];
+  qItems.sort((a, b) => zones.indexOf(a.zone) - zones.indexOf(b.zone));
+
+  const isLight = document.documentElement.dataset.theme === "light";
+  const stage = document.createElement("proof-sheet");
+  if (isLight) {
+    stage.setAttribute("data-theme", "light");
+  }
+  stage.configure({ items: qItems, qcfg, layout });
+  document.body.appendChild(stage);
+
+  try {
+    await stage.waitForImages();
+    const dataUrl = await domToPng(stage, {
+      backgroundColor: isLight ? "#f8fafc" : "#0b0f17",
+      scale: 1,
+      style: {
+        left: "0",
+        top: "0",
+      },
+    });
+
+    compositeUrl = dataUrl;
+    const res = await fetch(dataUrl);
+    compositeBlob = await res.blob();
+    const resultImg = $("compositeResultImg") as HTMLImageElement | null;
+    if (resultImg) resultImg.src = dataUrl;
+    return dataUrl;
+  } finally {
+    stage.remove();
+  }
+}
+
+const segmentBtns = document.querySelectorAll(".segment-btn");
+segmentBtns.forEach((btn) => {
+  const el = btn as HTMLButtonElement;
+  el.onclick = async () => {
+    const targetLayout = (el.dataset.layout as ProofSheetLayout) || "stack";
+    if (targetLayout === currentLayout && compositeUrl) return;
+    currentLayout = targetLayout;
+    localStorage.setItem("proofsheet_layout", currentLayout);
+    updateLayoutSegmentUI(currentLayout);
+
+    if ($("compositeModal")?.classList.contains("active")) {
+      const resultImg = $("compositeResultImg") as HTMLImageElement | null;
+      if (resultImg) resultImg.style.opacity = "0.4";
+      try {
+        await generateComposite(currentLayout);
+      } catch (err: unknown) {
+        console.error("Re-synthesis failed:", err);
+      } finally {
+        if (resultImg) resultImg.style.opacity = "1";
+      }
+    }
+  };
+});
+
 const createQuadrantImgBtn = $("createQuadrantImgBtn") as HTMLButtonElement | null;
 if (createQuadrantImgBtn) {
   createQuadrantImgBtn.onclick = async () => {
@@ -520,30 +595,8 @@ if (createQuadrantImgBtn) {
     btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="spin"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Synthesizing...`;
 
     try {
-      const zones = ["square-1", "square-2", "square-3", "square-4"];
-      qItems.sort((a, b) => zones.indexOf(a.zone) - zones.indexOf(b.zone));
-
-      // Instantiate <proof-sheet> custom element with Shadow DOM
-      const stage = document.createElement("proof-sheet");
-      stage.configure({ items: qItems, qcfg });
-      document.body.appendChild(stage);
-
-      await stage.waitForImages();
-      const dataUrl = await domToPng(stage, {
-        backgroundColor: "#0b0f17",
-        scale: 1,
-        style: {
-          left: "0",
-          top: "0",
-        },
-      });
-      stage.remove();
-
-      compositeUrl = dataUrl;
-      const res = await fetch(dataUrl);
-      compositeBlob = await res.blob();
-      const resultImg = $("compositeResultImg") as HTMLImageElement | null;
-      if (resultImg) resultImg.src = dataUrl;
+      updateLayoutSegmentUI(currentLayout);
+      await generateComposite(currentLayout);
       $("compositeModal")?.classList.add("active");
     } catch (err: unknown) {
       console.error("Synthesis failed:", err);
@@ -586,8 +639,45 @@ if (copyCompositeBtn) {
   };
 }
 
+// Theme Management
+function initTheme() {
+  const stored = localStorage.getItem("theme") as "light" | "dark" | null;
+  const system = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  const theme = stored || system;
+  document.documentElement.dataset.theme = theme;
+
+  window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", (e) => {
+    if (!localStorage.getItem("theme")) {
+      document.documentElement.dataset.theme = e.matches ? "light" : "dark";
+    }
+  });
+
+  const toggleBtn = $("themeToggleBtn") as HTMLButtonElement | null;
+  if (toggleBtn) {
+    toggleBtn.onclick = async () => {
+      const current = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+      const next = current === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("theme", next);
+
+      if ($("compositeModal")?.classList.contains("active")) {
+        const resultImg = $("compositeResultImg") as HTMLImageElement | null;
+        if (resultImg) resultImg.style.opacity = "0.4";
+        try {
+          await generateComposite(currentLayout);
+        } catch (err: unknown) {
+          console.error("Re-synthesis failed on theme toggle:", err);
+        } finally {
+          if (resultImg) resultImg.style.opacity = "1";
+        }
+      }
+    };
+  }
+}
+
 // Initialization
 void (async function init() {
+  initTheme();
   const titles = await Storage.loadTitles();
   if (titles) {
     ([1, 2, 3, 4] as const).forEach((n) => {

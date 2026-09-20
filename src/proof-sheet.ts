@@ -8,10 +8,12 @@ export interface ProofItem {
   id: string;
   url: string;
   name: string;
-  time: string;
+  time?: string;
   zone: string;
   createdAt?: number;
 }
+
+export type ProofSheetLayout = "stack" | "span" | "rows";
 
 export interface QuadrantConfig {
   id: string;
@@ -54,6 +56,7 @@ previewTemplate.innerHTML = `
 export class ProofSheet extends HTMLElement {
   #items: ProofItem[] = [];
   #qcfg: Record<string, QuadrantConfig> = {};
+  #layout: ProofSheetLayout = "stack";
 
   constructor() {
     super();
@@ -79,15 +82,32 @@ export class ProofSheet extends HTMLElement {
     this.#update();
   }
 
+  get layout(): ProofSheetLayout {
+    return this.#layout;
+  }
+
+  set layout(val: ProofSheetLayout) {
+    this.#layout = val === "span" || val === "rows" ? val : "stack";
+    this.setAttribute("layout", this.#layout);
+    this.#update();
+  }
+
   /**
    * Helper to configure items and quadrant dictionary in one call.
    */
   configure({
     items = [],
     qcfg = {},
-  }: { items?: ProofItem[]; qcfg?: Record<string, QuadrantConfig> } = {}) {
+    layout = "stack",
+  }: {
+    items?: ProofItem[];
+    qcfg?: Record<string, QuadrantConfig>;
+    layout?: ProofSheetLayout;
+  } = {}) {
     this.#qcfg = qcfg;
     this.#items = items;
+    this.#layout = layout === "span" || layout === "rows" ? layout : "stack";
+    this.setAttribute("layout", this.#layout);
     this.#update();
   }
 
@@ -130,6 +150,8 @@ export class ProofSheet extends HTMLElement {
     if (countBadge)
       countBadge.textContent = `COUNT: ${this.#items.length} ${this.#items.length === 1 ? "ARTIFACT" : "ARTIFACTS"}`;
 
+    this.setAttribute("layout", this.#layout);
+
     // Clear and stamp cards by section
     grid.innerHTML = "";
     const fragment = document.createDocumentFragment();
@@ -137,6 +159,11 @@ export class ProofSheet extends HTMLElement {
     for (const zone of sortedZones) {
       const items = groups.get(zone)!;
       const clone = sectionTemplate.content.cloneNode(true) as DocumentFragment;
+      const cardEl = clone.querySelector(".sheet-card") as HTMLElement;
+      if (cardEl && items.length > 1) {
+        cardEl.dataset.multi = "true";
+      }
+
       const cfg = this.#qcfg[zone] || {
         code: "QUAD",
         color: "#3b82f6",

@@ -129,14 +129,46 @@
   white-space: nowrap;
 }
 
-.card-previews {
-  display: grid;
-  grid-template-columns: 1fr;
+/* Layout 1: Stack (Default) - Vertical stack per quadrant */
+:host([layout="stack"]) .card-previews,
+:host(:not([layout])) .card-previews {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.card-previews.multi {
+/* Layout 2: Span - Multi-image sections span across 2 columns */
+:host([layout="span"]) .sheet-card[data-multi="true"] {
+  grid-column: 1 / -1;
+}
+
+:host([layout="span"]) .sheet-card[data-multi="true"] .card-previews {
+  display: grid;
   grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+:host([layout="span"]) .sheet-card:not([data-multi="true"]) .card-previews {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Layout 3: Rows - Full-width rows for every quadrant */
+:host([layout="rows"]) .grid-container {
+  grid-template-columns: 1fr;
+}
+
+:host([layout="rows"]) .card-previews.multi {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+:host([layout="rows"]) .card-previews:not(.multi) {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .card-preview {
@@ -151,11 +183,6 @@
   overflow: hidden;
 }
 
-.card-previews.multi .card-preview {
-  min-height: 220px;
-  max-height: 380px;
-}
-
 .card-preview img {
   max-width: 100%;
   max-height: 490px;
@@ -163,6 +190,38 @@
   display: block;
 }
 
-.card-previews.multi .card-preview img {
-  max-height: 350px;
+/* Light Mode Proof Sheet */
+:host([data-theme="light"]) {
+  background: #f8fafc;
+  color: #0f172a;
+}
+:host([data-theme="light"]) .sheet-title {
+  color: #0f172a;
+}
+:host([data-theme="light"]) .sheet-meta {
+  color: #64748b;
+}
+:host([data-theme="light"]) .item-badge {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+:host([data-theme="light"]) .sheet-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+:host([data-theme="light"]) .card-header {
+  border-bottom-color: #e2e8f0;
+}
+:host([data-theme="light"]) .card-title {
+  color: #0f172a;
+}
+:host([data-theme="light"]) .card-filename {
+  color: #64748b;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+:host([data-theme="light"]) .card-preview {
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
