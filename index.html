@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ScreenshotLabels</title>
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <header>
@@ -20,15 +21,17 @@
         <button class="btn" id="sampleBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <rect x="3" y="3" width="18" height="18" rx="2" />
-            <path d="M3 9h18M9 21V9" /></svg>
-            Add Samples
+            <path d="M3 9h18M9 21V9" />
+          </svg>
+          Add Samples
         </button>
         <button class="btn btn-hero" id="createQuadrantImgBtn">
           <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <rect x="3" y="3" width="18" height="18" rx="2" />
             <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" /></svg>
-            Generate Screenshot
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          Generate Screenshot
         </button>
         <button class="btn btn-danger" id="clearAllBtn">Clear All</button>
         <input type="file" id="fileInput" multiple accept="image/*" style="display: none" />
@@ -89,14 +92,10 @@
       <aside class="dock-panel" data-zone-id="tray">
         <div class="dock-header">
           <div class="dock-title-row">
-            <span class="dock-title">Intake Staging</span>
-          </div>
-          <div class="intake-cue">
-            <span>Direct Paste</span><span class="key-cap">⌘V</span><span>or</span
-            ><span class="key-cap">Ctrl+V</span>
+            <span class="dock-title">Staging</span>
           </div>
           <div class="drop-intake-box" id="dropzoneBox" role="button" tabindex="0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />

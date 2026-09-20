@@ -512,9 +512,7 @@ if (createQuadrantImgBtn) {
   createQuadrantImgBtn.onclick = async () => {
     const qItems = state.items.filter((i) => i.zone.startsWith("square-"));
     if (!qItems.length)
-      return alert(
-        "No screenshots found in Quadrants 1–4. Drag screenshots into quadrants first.",
-      );
+      return alert("No screenshots found in Quadrants 1–4. Drag screenshots into quadrants first.");
 
     const btn = createQuadrantImgBtn;
     const prevHtml = btn.innerHTML;
@@ -534,6 +532,10 @@ if (createQuadrantImgBtn) {
       const dataUrl = await domToPng(stage, {
         backgroundColor: "#0b0f17",
         scale: 1,
+        style: {
+          left: "0",
+          top: "0",
+        },
       });
       stage.remove();
 

@@ -20,136 +20,19 @@ export interface QuadrantConfig {
   color: string;
 }
 
+import sheetStyles from "./proof-sheet.css?inline";
+
 const template = document.createElement("template");
 template.innerHTML = `
-  <style>
-    :host {
-      display: block;
-      position: fixed;
-      left: 0;
-      top: 0;
-      z-index: -9999;
-      pointer-events: none;
-      background: #0b0f17;
-      color: #f1f5f9;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 40px;
-      box-sizing: border-box;
-      width: 1480px;
-    }
-    :host([single]) {
-      width: 880px;
-    }
-    .sheet-layout {
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-    }
-    .mark-c1 { background: #38bdf8; border-radius: 2px; }
-    .mark-c2 { background: #f59e0b; border-radius: 2px; }
-    .mark-c3 { background: #10b981; border-radius: 2px; }
-    .mark-c4 { background: #a855f7; border-radius: 2px; }
-    .sheet-title {
-      font-size: 1.6rem;
-      font-weight: 800;
-      margin: 0;
-      color: #f8fafc;
-      letter-spacing: -0.02em;
-    }
-    .sheet-meta {
-      font-size: 0.82rem;
-      color: #94a3b8;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      margin: 3px 0 0;
-    }
-    .item-badge {
-      background: #121824;
-      border: 1px solid #27354d;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: #cbd5e1;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .grid-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-    :host([single]) .grid-container {
-      grid-template-columns: 1fr;
-    }
-    .sheet-card {
-      background: #121824;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #1e293b;
-      padding-bottom: 10px;
-    }
-    .card-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .card-coord {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 3px 6px;
-    }
-    .card-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: -0.015em;
-    }
-    .card-filename {
-      font-size: 0.78rem;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: #94a3b8;
-      background: #0b0f17;
-      padding: 3px 8px;
-      border: 1px solid #1e293b;
-      max-width: 240px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .card-preview {
-      background: #080c12;
-      border: 1px solid #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      min-height: 340px;
-      max-height: 520px;
-      overflow: hidden;
-    }
-    .card-preview img {
-      max-width: 100%;
-      max-height: 490px;
-      object-fit: contain;
-      display: block;
-    }
-  </style>
+  <style>${sheetStyles}</style>
 
   <div class="sheet-layout">
     <main class="grid-container" id="grid"></main>
   </div>
 `;
 
-const cardTemplate = document.createElement("template");
-cardTemplate.innerHTML = `
+const sectionTemplate = document.createElement("template");
+sectionTemplate.innerHTML = `
   <article class="sheet-card">
     <header class="card-header">
       <div class="card-title-wrap">
@@ -157,10 +40,15 @@ cardTemplate.innerHTML = `
         <span class="card-title"></span>
       </div>
     </header>
-    <div class="card-preview">
-      <img alt="Screenshot artifact">
-    </div>
+    <div class="card-previews"></div>
   </article>
+`;
+
+const previewTemplate = document.createElement("template");
+previewTemplate.innerHTML = `
+  <div class="card-preview">
+    <img alt="Screenshot artifact">
+  </div>
 `;
 
 export class ProofSheet extends HTMLElement {
@@ -210,8 +98,26 @@ export class ProofSheet extends HTMLElement {
     const countBadge = this.shadowRoot.getElementById("countBadge");
     if (!grid) return;
 
-    // Toggle single column attribute
-    if (this.#items.length <= 1) {
+    // Group items by quadrant/zone
+    const zoneOrder = ["square-1", "square-2", "square-3", "square-4"];
+    const groups = new Map<string, ProofItem[]>();
+    for (const item of this.#items) {
+      const z = item.zone || "square-1";
+      if (!groups.has(z)) groups.set(z, []);
+      groups.get(z)!.push(item);
+    }
+
+    const sortedZones = Array.from(groups.keys()).sort((a, b) => {
+      const idxA = zoneOrder.indexOf(a);
+      const idxB = zoneOrder.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return 0;
+    });
+
+    // Toggle single column attribute if only 1 quadrant has items
+    if (sortedZones.length <= 1) {
       this.setAttribute("single", "");
     } else {
       this.removeAttribute("single");
@@ -224,13 +130,14 @@ export class ProofSheet extends HTMLElement {
     if (countBadge)
       countBadge.textContent = `COUNT: ${this.#items.length} ${this.#items.length === 1 ? "ARTIFACT" : "ARTIFACTS"}`;
 
-    // Clear and stamp cards using cardTemplate
+    // Clear and stamp cards by section
     grid.innerHTML = "";
     const fragment = document.createDocumentFragment();
 
-    for (const item of this.#items) {
-      const clone = cardTemplate.content.cloneNode(true) as DocumentFragment;
-      const cfg = this.#qcfg[item.zone] || {
+    for (const zone of sortedZones) {
+      const items = groups.get(zone)!;
+      const clone = sectionTemplate.content.cloneNode(true) as DocumentFragment;
+      const cfg = this.#qcfg[zone] || {
         code: "QUAD",
         color: "#3b82f6",
         id: "",
@@ -248,13 +155,19 @@ export class ProofSheet extends HTMLElement {
       const titleEl = clone.querySelector(".card-title");
       if (titleEl) titleEl.textContent = title;
 
-      const filenameEl = clone.querySelector(".card-filename");
-      if (filenameEl) filenameEl.textContent = item.name;
-
-      const img = clone.querySelector("img");
-      if (img) {
-        img.src = item.url;
-        img.alt = item.name;
+      const previewsContainer = clone.querySelector(".card-previews") as HTMLElement;
+      if (previewsContainer) {
+        previewsContainer.dataset.count = String(items.length);
+        if (items.length > 1) previewsContainer.classList.add("multi");
+        for (const item of items) {
+          const previewClone = previewTemplate.content.cloneNode(true) as DocumentFragment;
+          const img = previewClone.querySelector("img");
+          if (img) {
+            img.src = item.url;
+            img.alt = item.name;
+          }
+          previewsContainer.appendChild(previewClone);
+        }
       }
 
       fragment.appendChild(clone);

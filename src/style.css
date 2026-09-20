@@ -648,19 +648,25 @@ header {
 }
 
 /* Composite Modal */
+#compositeModal {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
 .composite-dialog {
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  max-width: 95vw;
-  max-height: 92vh;
-  width: 1120px;
+  border: none;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+  box-shadow: none;
 }
 .composite-dialog-header {
-  padding: 0.85rem 1.25rem;
+  padding: 0.85rem 1.5rem;
   border-bottom: 1px solid var(--border-dim);
   display: flex;
   justify-content: space-between;
@@ -668,6 +674,7 @@ header {
   background: var(--bg-panel);
   flex-wrap: wrap;
   gap: 0.75rem;
+  flex-shrink: 0;
 }
 .composite-dialog-title {
   font-size: 1rem;
@@ -687,11 +694,14 @@ header {
   padding: 1.5rem;
   background: #080b10;
   display: flex;
-  justify-content: center;
 }
 #compositeResultImg {
+  margin: auto;
   max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  object-fit: contain;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8);
   display: block;
