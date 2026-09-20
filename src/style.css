@@ -590,6 +590,14 @@ header {
   background: var(--accent-crimson);
   color: #fff;
 }
+.tool-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.tool-btn:disabled:hover {
+  background: transparent;
+  color: var(--text-secondary);
+}
 
 .quick-dispatch {
   position: relative;

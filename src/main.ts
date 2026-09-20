@@ -66,6 +66,16 @@ const Storage = {
         } catch {}
       }
     }),
+  saveOrder: (order: string[]) => {
+    try {
+      localStorage.setItem("screenshot_order", JSON.stringify(order));
+    } catch {}
+    return idb(STORE_META, "readwrite", (s) => s.put({ key: "order", val: order }));
+  },
+  loadOrder: (): Promise<string[] | null> =>
+    idb<{ key: string; val: string[] }>(STORE_META, "readonly", (s) => s.get("order")).then(
+      (r) => r?.val ?? JSON.parse(localStorage.getItem("screenshot_order") || "null"),
+    ),
   delete: (id: string) =>
     idb(STORE_ITEMS, "readwrite", (s) => s.delete(id)).then((ok) => {
       if (!ok) {
@@ -77,6 +87,7 @@ const Storage = {
   clearAll: async () => {
     localStorage.removeItem("screenshot_items");
     localStorage.removeItem("screenshot_titles");
+    localStorage.removeItem("screenshot_order");
     await idb(STORE_ITEMS, "readwrite", (s) => s.clear());
     await idb(STORE_META, "readwrite", (s) => s.clear());
   },
@@ -129,6 +140,7 @@ async function addScreenshot(url: string, name = "Screenshot", zone = "tray") {
   state.items.push(item);
   render();
   await Storage.save(item);
+  await Storage.saveOrder(state.items.map((i) => i.id));
   flashSync();
 }
 
@@ -146,13 +158,59 @@ function handleFiles(files: FileList | File[] | null, zone = "tray") {
 }
 
 async function moveItem(id: string, zone: string) {
-  const item = state.items.find((i) => i.id === id);
-  if (item) {
-    item.zone = zone;
-    render();
-    await Storage.save(item);
-    flashSync();
+  const itemIndex = state.items.findIndex((i) => i.id === id);
+  if (itemIndex === -1) return;
+  const item = state.items[itemIndex];
+
+  // Find the last item in target zone (excluding this item)
+  let lastZoneIndex = -1;
+  for (let i = state.items.length - 1; i >= 0; i--) {
+    if (state.items[i].zone === zone && state.items[i].id !== id) {
+      lastZoneIndex = i;
+      break;
+    }
   }
+
+  // Remove item from its current position
+  state.items.splice(itemIndex, 1);
+  item.zone = zone;
+
+  if (lastZoneIndex !== -1) {
+    const insertIndex = lastZoneIndex > itemIndex ? lastZoneIndex : lastZoneIndex + 1;
+    state.items.splice(insertIndex, 0, item);
+  } else {
+    // If no other items in target zone, append to state.items
+    state.items.push(item);
+  }
+
+  render();
+  await Storage.save(item);
+  await Storage.saveOrder(state.items.map((i) => i.id));
+  flashSync();
+}
+
+async function moveUpItem(id: string) {
+  const itemIndex = state.items.findIndex((i) => i.id === id);
+  if (itemIndex === -1) return;
+  const currentItem = state.items[itemIndex];
+
+  // Find the previous item belonging to the same zone
+  let prevIndex = -1;
+  for (let i = itemIndex - 1; i >= 0; i--) {
+    if (state.items[i].zone === currentItem.zone) {
+      prevIndex = i;
+      break;
+    }
+  }
+
+  if (prevIndex === -1) return;
+
+  state.items.splice(itemIndex, 1);
+  state.items.splice(prevIndex, 0, currentItem);
+
+  render();
+  await Storage.saveOrder(state.items.map((i) => i.id));
+  flashSync();
 }
 
 // Render Workbench
@@ -166,9 +224,14 @@ function render() {
   };
   Object.values(zones).forEach((el) => el && (el.innerHTML = ""));
 
+  const seenZones = new Set<string>();
   state.items.forEach((item) => {
     const parent = zones[item.zone] || zones.tray;
     if (!parent) return;
+
+    const isFirstInZone = !seenZones.has(item.zone);
+    seenZones.add(item.zone);
+
     const card = document.createElement("div");
     card.className = "screenshot-card";
     card.draggable = true;
@@ -177,6 +240,9 @@ function render() {
       <div class="img-frame">
         <img src="${item.url}" alt="${item.name}">
         <div class="card-actions-dock">
+          <button class="tool-btn move-up-btn" title="Push up" ${isFirstInZone ? "disabled" : ""}>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          </button>
           <button class="tool-btn zoom-btn" title="Zoom"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
           <button class="tool-btn delete-btn" title="Delete"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
@@ -233,6 +299,13 @@ document.addEventListener("click", async (e) => {
     }
     return;
   }
+  if (target.closest(".move-up-btn")) {
+    const btn = target.closest<HTMLButtonElement>(".move-up-btn");
+    if (btn && !btn.disabled && item) {
+      void moveUpItem(item.id);
+    }
+    return;
+  }
   if (target.closest(".zoom-btn")) {
     if (item) return openLightbox(item.url, item.name);
     return;
@@ -241,7 +314,10 @@ document.addEventListener("click", async (e) => {
     if (item) {
       state.items = state.items.filter((i) => i.id !== item.id);
       render();
-      return Storage.delete(item.id);
+      void Storage.delete(item.id);
+      void Storage.saveOrder(state.items.map((i) => i.id));
+      flashSync();
+      return;
     }
     return;
   }
@@ -686,6 +762,23 @@ void (async function init() {
       if (val && titleEl) titleEl.textContent = val;
     });
   }
-  state.items = await Storage.getAll();
+  const [loadedItems, savedOrder] = await Promise.all([Storage.getAll(), Storage.loadOrder()]);
+  if (savedOrder && savedOrder.length) {
+    const map = new Map(loadedItems.map((i) => [i.id, i]));
+    const ordered: ScreenshotItem[] = [];
+    for (const id of savedOrder) {
+      const it = map.get(id);
+      if (it) {
+        ordered.push(it);
+        map.delete(id);
+      }
+    }
+    for (const remaining of map.values()) {
+      ordered.push(remaining);
+    }
+    state.items = ordered;
+  } else {
+    state.items = loadedItems;
+  }
   render();
 })();
