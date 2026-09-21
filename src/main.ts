@@ -106,7 +106,6 @@ const Storage = {
 // State & Selectors
 const state: { items: ScreenshotItem[] } = { items: [] };
 let draggedItemId: string | null = null;
-let activeMenu: HTMLElement | null = null;
 let compositeBlob: Blob | null = null;
 let compositeUrl: string | null = null;
 
@@ -312,25 +311,6 @@ document.addEventListener("click", async (e) => {
   const card = target.closest<HTMLElement>(".screenshot-card");
   const item = card ? state.items.find((i) => i.id === card.dataset.id) : null;
 
-  if (target.closest(".dispatch-btn")) {
-    const menu = card?.querySelector<HTMLElement>(".dispatch-menu");
-    if (activeMenu && activeMenu !== menu) activeMenu.classList.remove("show");
-    if (menu) {
-      menu.classList.toggle("show");
-      activeMenu = menu.classList.contains("show") ? menu : null;
-    }
-    return;
-  }
-  if (target.closest(".dispatch-item")) {
-    const moveBtn = target.closest<HTMLElement>(".dispatch-item");
-    const targetZone = moveBtn?.dataset.move;
-    activeMenu?.classList.remove("show");
-    activeMenu = null;
-    if (item && targetZone) {
-      return moveItem(item.id, targetZone);
-    }
-    return;
-  }
   if (target.closest(".move-up-btn")) {
     const btn = target.closest<HTMLButtonElement>(".move-up-btn");
     if (btn && !btn.disabled && item) {
@@ -352,10 +332,6 @@ document.addEventListener("click", async (e) => {
       return;
     }
     return;
-  }
-  if (activeMenu && !activeMenu.contains(target)) {
-    activeMenu.classList.remove("show");
-    activeMenu = null;
   }
 });
 
@@ -461,29 +437,6 @@ if (clearAllBtn) {
     render();
     await Storage.clearAll();
     flashSync();
-  };
-}
-
-const exportBtn = $("exportBtn");
-if (exportBtn) {
-  exportBtn.onclick = () => {
-    if (!state.items.length) return alert("No screenshots to export yet.");
-    const data = {
-      generatedAt: new Date().toISOString(),
-      categories: {
-        q1: $("title-sq-1")?.textContent?.trim(),
-        q2: $("title-sq-2")?.textContent?.trim(),
-        q3: $("title-sq-3")?.textContent?.trim(),
-        q4: $("title-sq-4")?.textContent?.trim(),
-      },
-      items: state.items,
-    };
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(
-      new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
-    );
-    a.download = `proofsheet-${Date.now()}.json`;
-    a.click();
   };
 }
 

@@ -23,53 +23,6 @@
   gap: 28px;
 }
 
-.mark-c1 {
-  background: #38bdf8;
-  border-radius: 2px;
-}
-
-.mark-c2 {
-  background: #f59e0b;
-  border-radius: 2px;
-}
-
-.mark-c3 {
-  background: #10b981;
-  border-radius: 2px;
-}
-
-.mark-c4 {
-  background: #a855f7;
-  border-radius: 2px;
-}
-
-.sheet-title {
-  font-size: 1.6rem;
-  font-weight: 800;
-  margin: 0;
-  color: #f8fafc;
-  letter-spacing: -0.02em;
-}
-
-.sheet-meta {
-  font-size: 0.82rem;
-  color: #94a3b8;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  margin: 3px 0 0;
-}
-
-.item-badge {
-  background: #121824;
-  border: 1px solid #27354d;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #cbd5e1;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
 .grid-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -114,19 +67,6 @@
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.015em;
-}
-
-.card-filename {
-  font-size: 0.78rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #94a3b8;
-  background: #0b0f17;
-  padding: 3px 8px;
-  border: 1px solid #1e293b;
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Layout 1: Stack (Default) - Vertical stack per quadrant */
@@ -195,17 +135,6 @@
   background: #f8fafc;
   color: #0f172a;
 }
-:host([data-theme="light"]) .sheet-title {
-  color: #0f172a;
-}
-:host([data-theme="light"]) .sheet-meta {
-  color: #64748b;
-}
-:host([data-theme="light"]) .item-badge {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  color: #334155;
-}
 :host([data-theme="light"]) .sheet-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -215,11 +144,6 @@
 }
 :host([data-theme="light"]) .card-title {
   color: #0f172a;
-}
-:host([data-theme="light"]) .card-filename {
-  color: #64748b;
-  background: #f1f5f9;
-  border-color: #cbd5e1;
 }
 :host([data-theme="light"]) .card-preview {
   background: #f8fafc;

@@ -114,8 +114,6 @@ export class ProofSheet extends HTMLElement {
   #update() {
     if (!this.shadowRoot) return;
     const grid = this.shadowRoot.getElementById("grid");
-    const metaTimestamp = this.shadowRoot.getElementById("metaTimestamp");
-    const countBadge = this.shadowRoot.getElementById("countBadge");
     if (!grid) return;
 
     // Group items by quadrant/zone
@@ -142,13 +140,6 @@ export class ProofSheet extends HTMLElement {
     } else {
       this.removeAttribute("single");
     }
-
-    // Update header metadata
-    const dateStr = new Date().toLocaleDateString().toUpperCase();
-    const timeStr = new Date().toLocaleTimeString();
-    if (metaTimestamp) metaTimestamp.textContent = `EXPORTED ${dateStr} · ${timeStr}`;
-    if (countBadge)
-      countBadge.textContent = `COUNT: ${this.#items.length} ${this.#items.length === 1 ? "ARTIFACT" : "ARTIFACTS"}`;
 
     this.setAttribute("layout", this.#layout);
 
