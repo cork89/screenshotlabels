@@ -273,9 +273,41 @@ function render() {
 }
 
 // Unified Delegated Event Handlers
+document.addEventListener("mousedown", (e) => {
+  const target = e.target as HTMLElement | null;
+  if (target?.closest(".edit-label-btn")) {
+    e.preventDefault();
+  }
+});
+
 document.addEventListener("click", async (e) => {
   const target = e.target as HTMLElement | null;
   if (!target) return;
+
+  const editLabelBtn = target.closest<HTMLElement>(".edit-label-btn");
+  if (editLabelBtn) {
+    const label = editLabelBtn
+      .closest(".cell-identity")
+      ?.querySelector<HTMLElement>(".editable-label");
+    if (label) {
+      const selection = window.getSelection();
+      const hasSelection =
+        selection !== null && !selection.isCollapsed && label.contains(selection.anchorNode);
+      const isEditing = document.activeElement === label;
+
+      if (hasSelection || isEditing) {
+        selection?.removeAllRanges();
+        label.blur();
+      } else {
+        label.focus();
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+    return;
+  }
 
   const card = target.closest<HTMLElement>(".screenshot-card");
   const item = card ? state.items.find((i) => i.id === card.dataset.id) : null;
