@@ -483,7 +483,6 @@ header {
   cursor: grab;
   position: relative;
   transition:
-    transform 0.12s,
     border-color 0.12s,
     box-shadow 0.12s;
   display: flex;
@@ -492,7 +491,6 @@ header {
 .screenshot-card:hover {
   border-color: var(--border-subtle);
   background: var(--bg-card-hover);
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 :root[data-theme="light"] .screenshot-card:hover {
